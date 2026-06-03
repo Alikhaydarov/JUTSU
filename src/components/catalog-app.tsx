@@ -7,8 +7,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   BookOpen,
+  Boxes,
+  ChefHat,
   Check,
   ChevronDown,
+  CircleDollarSign,
+  ClipboardList,
   CookingPot,
   CreditCard,
   Eye,
@@ -22,7 +26,10 @@ import {
   MessageCircle,
   PackageCheck,
   PackageSearch,
+  PanelTopOpen,
   Phone,
+  Plus,
+  Save,
   Search,
   ShieldCheck,
   ShoppingBag,
@@ -31,7 +38,6 @@ import {
   Store,
   Tags,
   Utensils,
-  UserRound,
   WalletCards,
   X,
 } from "lucide-react";
@@ -50,7 +56,7 @@ type CatalogAppProps = {
   locale: Locale;
 };
 
-type ActiveTab = "products" | "restaurants" | "guides";
+type ActiveTab = "products" | "restaurants" | "guides" | "panel";
 type ProductGroup =
   | "all"
   | "tech"
@@ -59,13 +65,47 @@ type ProductGroup =
   | "room"
   | "accessories";
 type AuthMode = "login" | "register";
-type AuthIdentity = "email" | "phone";
 type AccountRole = "buyer" | "seller";
 type UserProfile = {
   name: string;
   email: string;
   phone?: string;
   role: AccountRole;
+};
+type PanelProductDraft = {
+  title: string;
+  brand: string;
+  category: Product["category"];
+  condition: Product["condition"];
+  price: string;
+  contact: string;
+  imageUrl: string;
+};
+type PanelRestaurantDraft = {
+  name: string;
+  cuisine: Restaurant["cuisine"];
+  priceBand: Restaurant["priceBand"];
+  address: string;
+  contact: string;
+  halalFriendly: boolean;
+  imageUrl: string;
+};
+type PanelMenuItem = {
+  id: string;
+  restaurantId: string;
+  name: string;
+  category: string;
+  price: number;
+  halalFriendly: boolean;
+  available: boolean;
+};
+type PanelMenuDraft = {
+  restaurantId: string;
+  name: string;
+  category: string;
+  price: string;
+  halalFriendly: boolean;
+  available: boolean;
 };
 type PaymentMethod =
   | "card"
@@ -112,6 +152,38 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
     "delivery"
   );
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [panelProductDraft, setPanelProductDraft] =
+    useState<PanelProductDraft>({
+      title: "Galaxy starter phone",
+      brand: "Samsung",
+      category: "phone",
+      condition: "used",
+      price: "250000",
+      contact: "Kakao: jutsu-seller",
+      imageUrl:
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+    });
+  const [panelRestaurantDraft, setPanelRestaurantDraft] =
+    useState<PanelRestaurantDraft>({
+      name: "JUTSU Local Kitchen",
+      cuisine: "halal",
+      priceBand: "mid",
+      address: "Incheon center",
+      contact: "010-0000-9000",
+      halalFriendly: true,
+      imageUrl:
+        "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+    });
+  const [panelMenuDraft, setPanelMenuDraft] = useState<PanelMenuDraft>({
+    restaurantId: "",
+    name: "Chicken bibimbap",
+    category: "Lunch",
+    price: "9000",
+    halalFriendly: true,
+    available: true,
+  });
+  const [panelMenuItems, setPanelMenuItems] = useState<PanelMenuItem[]>([]);
+  const [panelNotice, setPanelNotice] = useState("");
 
   useEffect(() => {
     if (selectedCity === catalog.selectedCity) {
@@ -170,12 +242,124 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
       ? filteredProducts.length
       : activeTab === "restaurants"
         ? filteredRestaurants.length
-        : filteredGuides.length;
+        : activeTab === "guides"
+          ? filteredGuides.length
+          : catalog.products.length + catalog.restaurants.length;
 
   const startCheckout = (product: Product) => {
     setSelectedProduct(null);
     setCheckoutProduct(product);
     setOrderPlaced(false);
+  };
+
+  const addPanelProduct = () => {
+    const priceKrw = Math.max(1000, Number(panelProductDraft.price) || 0);
+    const title = panelProductDraft.title.trim() || "JUTSU tech item";
+    const nextProduct: Product = {
+      id: `panel-tech-${Date.now()}`,
+      name: { uz: title, ru: title, en: title, ko: title },
+      citySlug: selectedCity,
+      category: panelProductDraft.category,
+      condition: panelProductDraft.condition,
+      priceKrw,
+      imageUrl:
+        panelProductDraft.imageUrl ||
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+      brand: panelProductDraft.brand || undefined,
+      stock: 1,
+      tags: ["panel", "tech"],
+      optionSummary: {
+        uz: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
+        ru: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
+        en: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
+        ko: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
+      },
+      sellerName: "JUTSU seller panel",
+      trustLevel: "community",
+      contact: panelProductDraft.contact,
+      source: "JUTSU panel demo",
+    };
+
+    setCatalog((current) => ({
+      ...current,
+      products: [nextProduct, ...current.products],
+    }));
+    setPanelNotice(t("panelProductAdded"));
+  };
+
+  const addPanelRestaurant = () => {
+    const title = panelRestaurantDraft.name.trim() || "JUTSU Restaurant";
+    const nextRestaurant: Restaurant = {
+      id: `panel-restaurant-${Date.now()}`,
+      name: { uz: title, ru: title, en: title, ko: title },
+      citySlug: selectedCity,
+      cuisine: panelRestaurantDraft.cuisine,
+      priceBand: panelRestaurantDraft.priceBand,
+      halalFriendly: panelRestaurantDraft.halalFriendly,
+      rating: 4.6,
+      imageUrl:
+        panelRestaurantDraft.imageUrl ||
+        "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+      address: {
+        uz: panelRestaurantDraft.address,
+        ru: panelRestaurantDraft.address,
+        en: panelRestaurantDraft.address,
+        ko: panelRestaurantDraft.address,
+      },
+      menuHighlights: [],
+      contact: panelRestaurantDraft.contact,
+      source: "JUTSU restaurant panel",
+    };
+
+    setCatalog((current) => ({
+      ...current,
+      restaurants: [nextRestaurant, ...current.restaurants],
+    }));
+    setPanelMenuDraft((current) => ({
+      ...current,
+      restaurantId: nextRestaurant.id,
+    }));
+    setPanelNotice(t("panelRestaurantAdded"));
+  };
+
+  const addPanelMenuItem = () => {
+    const restaurantsForCity = catalog.restaurants.filter(
+      (restaurant) => restaurant.citySlug === selectedCity
+    );
+    const restaurantId = panelMenuDraft.restaurantId || restaurantsForCity[0]?.id;
+
+    if (!restaurantId) {
+      setPanelNotice(t("panelNeedRestaurant"));
+      return;
+    }
+
+    const menuName = panelMenuDraft.name.trim() || "Menu item";
+    const nextMenuItem: PanelMenuItem = {
+      id: `panel-menu-${Date.now()}`,
+      restaurantId,
+      name: menuName,
+      category: panelMenuDraft.category || "Menu",
+      price: Math.max(1000, Number(panelMenuDraft.price) || 0),
+      halalFriendly: panelMenuDraft.halalFriendly,
+      available: panelMenuDraft.available,
+    };
+
+    setPanelMenuItems((current) => [nextMenuItem, ...current]);
+    setCatalog((current) => ({
+      ...current,
+      restaurants: current.restaurants.map((restaurant) =>
+        restaurant.id === restaurantId
+          ? {
+              ...restaurant,
+              menuHighlights: [
+                { uz: menuName, ru: menuName, en: menuName, ko: menuName },
+                ...restaurant.menuHighlights,
+              ].slice(0, 4),
+            }
+          : restaurant
+      ),
+    }));
+    setPanelNotice(t("panelMenuAdded"));
   };
 
   return (
@@ -278,7 +462,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               />
             </label>
 
-            <div className="grid grid-cols-3 gap-1 rounded-lg bg-[#fff2bf] p-1">
+            <div className="grid grid-cols-4 gap-1 rounded-lg bg-[#fff2bf] p-1">
               <TabButton
                 active={activeTab === "products"}
                 icon={<Laptop className="size-4" />}
@@ -296,6 +480,12 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 icon={<BookOpen className="size-4" />}
                 label={t("guides")}
                 onClick={() => setActiveTab("guides")}
+              />
+              <TabButton
+                active={activeTab === "panel"}
+                icon={<PanelTopOpen className="size-4" />}
+                label={t("panel")}
+                onClick={() => setActiveTab("panel")}
               />
             </div>
           </div>
@@ -319,7 +509,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 ? t("products")
                 : activeTab === "restaurants"
                   ? t("restaurants")
-                  : t("guides")}
+                  : activeTab === "guides"
+                    ? t("guides")
+                    : t("panel")}
             </span>
           </div>
         </div>
@@ -333,7 +525,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
         ) : null}
 
         {activeTab === "products" ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
@@ -368,6 +560,26 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               <GuideCard key={guide.id} guide={guide} locale={locale} />
             ))}
           </div>
+        ) : null}
+
+        {activeTab === "panel" ? (
+          <PartnerPanel
+            catalog={catalog}
+            locale={locale}
+            menuDraft={panelMenuDraft}
+            menuItems={panelMenuItems}
+            notice={panelNotice}
+            onAddMenuItem={addPanelMenuItem}
+            onAddProduct={addPanelProduct}
+            onAddRestaurant={addPanelRestaurant}
+            onMenuDraft={setPanelMenuDraft}
+            onProductDraft={setPanelProductDraft}
+            onRestaurantDraft={setPanelRestaurantDraft}
+            productDraft={panelProductDraft}
+            restaurantDraft={panelRestaurantDraft}
+            selectedCity={selectedCity}
+            t={t}
+          />
         ) : null}
 
         {currentCount === 0 ? (
@@ -486,6 +698,503 @@ function ProductGroupBar({
   );
 }
 
+function PartnerPanel({
+  catalog,
+  locale,
+  menuDraft,
+  menuItems,
+  notice,
+  onAddMenuItem,
+  onAddProduct,
+  onAddRestaurant,
+  onMenuDraft,
+  onProductDraft,
+  onRestaurantDraft,
+  productDraft,
+  restaurantDraft,
+  selectedCity,
+  t,
+}: {
+  catalog: CatalogData;
+  locale: Locale;
+  menuDraft: PanelMenuDraft;
+  menuItems: PanelMenuItem[];
+  notice: string;
+  onAddMenuItem: () => void;
+  onAddProduct: () => void;
+  onAddRestaurant: () => void;
+  onMenuDraft: React.Dispatch<React.SetStateAction<PanelMenuDraft>>;
+  onProductDraft: React.Dispatch<React.SetStateAction<PanelProductDraft>>;
+  onRestaurantDraft: React.Dispatch<React.SetStateAction<PanelRestaurantDraft>>;
+  productDraft: PanelProductDraft;
+  restaurantDraft: PanelRestaurantDraft;
+  selectedCity: string;
+  t: ReturnType<typeof useTranslations<"app">>;
+}) {
+  const cityProducts = catalog.products.filter(
+    (product) => product.citySlug === selectedCity
+  );
+  const cityRestaurants = catalog.restaurants.filter(
+    (restaurant) => restaurant.citySlug === selectedCity
+  );
+  const selectedRestaurantId =
+    menuDraft.restaurantId || cityRestaurants[0]?.id || "";
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <PanelMetric
+          icon={<Boxes className="size-5" />}
+          label={t("panelTechListings")}
+          value={cityProducts.length}
+        />
+        <PanelMetric
+          icon={<Store className="size-5" />}
+          label={t("panelRestaurants")}
+          value={cityRestaurants.length}
+        />
+        <PanelMetric
+          icon={<ClipboardList className="size-5" />}
+          label={t("panelMenuItems")}
+          value={menuItems.length}
+        />
+      </div>
+
+      {notice ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[#bfe7d6] bg-[#effaf5] px-4 py-3 text-sm font-black text-[#0f766e]">
+          <Check className="size-4" aria-hidden />
+          {notice}
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <PanelCard
+          icon={<Laptop className="size-5" />}
+          subtitle={t("techPanelSubtitle")}
+          title={t("techPanelTitle")}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PanelInput
+              label={t("productTitle")}
+              onChange={(value) =>
+                onProductDraft((current) => ({ ...current, title: value }))
+              }
+              value={productDraft.title}
+            />
+            <PanelInput
+              label={t("brand")}
+              onChange={(value) =>
+                onProductDraft((current) => ({ ...current, brand: value }))
+              }
+              value={productDraft.brand}
+            />
+            <PanelSelect
+              label={t("category")}
+              onChange={(value) =>
+                onProductDraft((current) => ({
+                  ...current,
+                  category: value as Product["category"],
+                }))
+              }
+              options={[
+                ["phone", t("techPhone")],
+                ["laptop", t("techLaptop")],
+                ["accessory", t("techAccessory")],
+                ["appliance", t("techKitchen")],
+              ]}
+              value={productDraft.category}
+            />
+            <PanelSelect
+              label={t("condition")}
+              onChange={(value) =>
+                onProductDraft((current) => ({
+                  ...current,
+                  condition: value as Product["condition"],
+                }))
+              }
+              options={[
+                ["new", t("new")],
+                ["used", t("used")],
+                ["refurbished", t("refurbished")],
+              ]}
+              value={productDraft.condition}
+            />
+            <PanelInput
+              inputMode="numeric"
+              label={t("priceKrw")}
+              onChange={(value) =>
+                onProductDraft((current) => ({ ...current, price: value }))
+              }
+              value={productDraft.price}
+            />
+            <PanelInput
+              label={t("contact")}
+              onChange={(value) =>
+                onProductDraft((current) => ({ ...current, contact: value }))
+              }
+              value={productDraft.contact}
+            />
+            <div className="sm:col-span-2">
+              <PanelInput
+                label={t("imageUrl")}
+                onChange={(value) =>
+                  onProductDraft((current) => ({ ...current, imageUrl: value }))
+                }
+                value={productDraft.imageUrl}
+              />
+            </div>
+          </div>
+          <button
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
+            onClick={onAddProduct}
+            type="button"
+          >
+            <Plus className="size-4" aria-hidden />
+            {t("addTechProduct")}
+          </button>
+        </PanelCard>
+
+        <PanelCard
+          icon={<ChefHat className="size-5" />}
+          subtitle={t("restaurantPanelSubtitle")}
+          title={t("restaurantPanelTitle")}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PanelInput
+              label={t("restaurantName")}
+              onChange={(value) =>
+                onRestaurantDraft((current) => ({ ...current, name: value }))
+              }
+              value={restaurantDraft.name}
+            />
+            <PanelSelect
+              label={t("cuisine")}
+              onChange={(value) =>
+                onRestaurantDraft((current) => ({
+                  ...current,
+                  cuisine: value as Restaurant["cuisine"],
+                }))
+              }
+              options={[
+                ["halal", "Halal"],
+                ["korean", "Korean"],
+                ["central-asian", "Central Asian"],
+                ["cafe", "Cafe"],
+                ["fast", "Fast"],
+              ]}
+              value={restaurantDraft.cuisine}
+            />
+            <PanelSelect
+              label={t("priceBand")}
+              onChange={(value) =>
+                onRestaurantDraft((current) => ({
+                  ...current,
+                  priceBand: value as Restaurant["priceBand"],
+                }))
+              }
+              options={[
+                ["budget", t("budget")],
+                ["mid", t("mid")],
+                ["premium", t("premium")],
+              ]}
+              value={restaurantDraft.priceBand}
+            />
+            <PanelInput
+              label={t("contact")}
+              onChange={(value) =>
+                onRestaurantDraft((current) => ({ ...current, contact: value }))
+              }
+              value={restaurantDraft.contact}
+            />
+            <div className="sm:col-span-2">
+              <PanelInput
+                label={t("address")}
+                onChange={(value) =>
+                  onRestaurantDraft((current) => ({
+                    ...current,
+                    address: value,
+                  }))
+                }
+                value={restaurantDraft.address}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <PanelInput
+                label={t("imageUrl")}
+                onChange={(value) =>
+                  onRestaurantDraft((current) => ({
+                    ...current,
+                    imageUrl: value,
+                  }))
+                }
+                value={restaurantDraft.imageUrl}
+              />
+            </div>
+            <PanelCheckbox
+              checked={restaurantDraft.halalFriendly}
+              label={t("halalFriendly")}
+              onChange={(value) =>
+                onRestaurantDraft((current) => ({
+                  ...current,
+                  halalFriendly: value,
+                }))
+              }
+            />
+          </div>
+          <button
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
+            onClick={onAddRestaurant}
+            type="button"
+          >
+            <Save className="size-4" aria-hidden />
+            {t("addRestaurant")}
+          </button>
+        </PanelCard>
+      </div>
+
+      <PanelCard
+        icon={<Utensils className="size-5" />}
+        subtitle={t("menuPanelSubtitle")}
+        title={t("menuPanelTitle")}
+      >
+        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+          <PanelSelect
+            label={t("restaurant")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, restaurantId: value }))
+            }
+            options={cityRestaurants.map((restaurant) => [
+              restaurant.id,
+              text(restaurant.name, locale),
+            ])}
+            value={selectedRestaurantId}
+          />
+          <PanelInput
+            label={t("menuItemName")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, name: value }))
+            }
+            value={menuDraft.name}
+          />
+          <PanelInput
+            label={t("menuCategory")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, category: value }))
+            }
+            value={menuDraft.category}
+          />
+          <PanelInput
+            inputMode="numeric"
+            label={t("priceKrw")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, price: value }))
+            }
+            value={menuDraft.price}
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <PanelCheckbox
+            checked={menuDraft.halalFriendly}
+            label={t("halalFriendly")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, halalFriendly: value }))
+            }
+          />
+          <PanelCheckbox
+            checked={menuDraft.available}
+            label={t("available")}
+            onChange={(value) =>
+              onMenuDraft((current) => ({ ...current, available: value }))
+            }
+          />
+        </div>
+        <button
+          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#3a2400] text-sm font-black text-white"
+          onClick={onAddMenuItem}
+          type="button"
+        >
+          <Plus className="size-4" aria-hidden />
+          {t("addMenuItem")}
+        </button>
+
+        <div className="mt-4 overflow-hidden rounded-lg border border-[#ead9a2]">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 bg-[#fff2bf] px-3 py-2 text-xs font-black uppercase text-[#7a5a15]">
+            <span>{t("menuItemName")}</span>
+            <span>{t("price")}</span>
+            <span>{t("status")}</span>
+          </div>
+          {menuItems.length ? (
+            menuItems.slice(0, 5).map((item) => (
+              <div
+                className="grid grid-cols-[1fr_auto_auto] gap-3 border-t border-[#ead9a2] bg-white px-3 py-2 text-sm font-semibold"
+                key={item.id}
+              >
+                <span className="min-w-0 truncate">
+                  {item.name} · {item.category}
+                </span>
+                <span>{formatKrw(item.price)}</span>
+                <span className="text-[#0f766e]">
+                  {item.available ? t("available") : t("unavailable")}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white px-3 py-4 text-sm font-semibold text-[#7a5a15]">
+              {t("menuEmpty")}
+            </div>
+          )}
+        </div>
+      </PanelCard>
+
+      <div className="rounded-lg border border-[#ead9a2] bg-white p-4">
+        <h3 className="flex items-center gap-2 text-base font-black">
+          <CircleDollarSign className="size-5 text-[#d62828]" aria-hidden />
+          {t("panelIdeasTitle")}
+        </h3>
+        <div className="mt-3 grid gap-2 text-sm font-semibold text-[#5b3b07] md:grid-cols-3">
+          <p>{t("panelIdeaCategories")}</p>
+          <p>{t("panelIdeaMenu")}</p>
+          <p>{t("panelIdeaOps")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PanelCard({
+  children,
+  icon,
+  subtitle,
+  title,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  subtitle: string;
+  title: string;
+}) {
+  return (
+    <section className="rounded-lg border border-[#ead9a2] bg-white p-4 shadow-sm">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#ffbc0d] text-[#3a2400]">
+          {icon}
+        </div>
+        <div>
+          <h2 className="text-lg font-black">{title}</h2>
+          <p className="text-sm font-semibold leading-5 text-[#7a5a15]">
+            {subtitle}
+          </p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function PanelMetric({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-lg border border-[#ead9a2] bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="grid size-10 place-items-center rounded-lg bg-[#fff2bf] text-[#3a2400]">
+          {icon}
+        </span>
+        <span className="text-2xl font-black">{value}</span>
+      </div>
+      <p className="mt-3 text-sm font-black text-[#7a5a15]">{label}</p>
+    </div>
+  );
+}
+
+function PanelInput({
+  inputMode,
+  label,
+  onChange,
+  value,
+}: {
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-black uppercase text-[#7a5a15]">
+        {label}
+      </span>
+      <input
+        className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+        inputMode={inputMode}
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
+      />
+    </label>
+  );
+}
+
+function PanelSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: string[][];
+  value: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-black uppercase text-[#7a5a15]">
+        {label}
+      </span>
+      <select
+        className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
+      >
+        {options.length ? (
+          options.map(([optionValue, optionLabel]) => (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          ))
+        ) : (
+          <option value="">-</option>
+        )}
+      </select>
+    </label>
+  );
+}
+
+function PanelCheckbox({
+  checked,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 py-2 text-sm font-black text-[#3a2400]">
+      <input
+        checked={checked}
+        className="size-4 accent-[#ffbc0d]"
+        onChange={(event) => onChange(event.target.checked)}
+        type="checkbox"
+      />
+      {label}
+    </label>
+  );
+}
+
 function ProductCard({
   locale,
   onDetails,
@@ -502,68 +1211,69 @@ function ProductCard({
   t: ReturnType<typeof useTranslations<"app">>;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-[#ead9a2] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="flex flex-col overflow-hidden rounded-lg border border-[#ead9a2] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <button
-        className="block w-full text-left"
+        className="flex min-w-0 flex-1 flex-col text-left"
         onClick={onDetails}
         type="button"
+        aria-label={text(product.name, locale)}
       >
-        <div className="relative aspect-[4/3] bg-[#fff2bf]">
+        <div className="relative aspect-square bg-[#fff2bf]">
           <Image
             alt={text(product.name, locale)}
             className="object-cover"
             fill
             priority={priority}
-            sizes="(max-width: 768px) 100vw, 33vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             src={product.imageUrl}
           />
-          <span className="absolute left-3 top-3 rounded-md bg-white px-2 py-1 text-xs font-black">
+          <span className="absolute left-2 top-2 rounded-md bg-white px-1.5 py-0.5 text-[10px] font-black sm:left-3 sm:top-3 sm:px-2 sm:py-1 sm:text-xs">
             {t(product.condition)}
           </span>
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-[#3a2400] px-2 py-1 text-xs font-black text-white">
-            <Tags className="size-3" aria-hidden />
-            {t(productGroupLabelKey(getProductGroup(product)))}
+          <span className="absolute right-2 top-2 inline-flex max-w-[76px] items-center gap-1 truncate rounded-md bg-[#3a2400] px-1.5 py-0.5 text-[10px] font-black text-white sm:right-3 sm:top-3 sm:max-w-none sm:px-2 sm:py-1 sm:text-xs">
+            <Tags className="size-3 shrink-0" aria-hidden />
+            <span className="truncate">
+              {t(productGroupLabelKey(getProductGroup(product)))}
+            </span>
           </span>
         </div>
-      </button>
-      <div className="flex min-h-64 flex-col gap-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <button className="text-left" onClick={onDetails} type="button">
-            <h2 className="line-clamp-2 text-lg font-black leading-6">
+        <div className="flex min-h-[168px] flex-1 flex-col gap-1.5 p-2 sm:min-h-64 sm:gap-3 sm:p-4">
+          <div className="space-y-1.5 sm:flex sm:items-start sm:justify-between sm:gap-3 sm:space-y-0">
+            <h2 className="line-clamp-2 text-sm font-black leading-5 sm:text-lg sm:leading-6">
               {text(product.name, locale)}
             </h2>
-          </button>
-          <TrustBadge t={t} trust={product.trustLevel} />
-        </div>
-        <div className="flex items-center gap-2 text-xl font-black">
-          <CreditCard className="size-5 text-[#f97316]" aria-hidden />
-          {formatKrw(product.priceKrw)}
-        </div>
-        <p className="text-sm font-medium text-[#7a5a15]">
-          {product.sellerName}
-        </p>
-        {product.optionSummary ? (
-          <p className="line-clamp-2 text-sm font-semibold leading-5 text-[#5b3b07]">
-            {text(product.optionSummary, locale)}
+            <TrustBadge t={t} trust={product.trustLevel} />
+          </div>
+          <div className="flex items-center gap-1.5 text-base font-black sm:gap-2 sm:text-xl">
+            <CreditCard className="size-4 text-[#f97316] sm:size-5" aria-hidden />
+            <span className="truncate">{formatKrw(product.priceKrw)}</span>
+          </div>
+          <p className="line-clamp-1 text-xs font-medium text-[#7a5a15] sm:text-sm">
+            {product.sellerName}
           </p>
-        ) : null}
-        <ProductSpecs product={product} t={t} />
-        <div className="mt-auto grid grid-cols-2 gap-2">
-          <button
-            className="h-10 rounded-lg border border-[#ead9a2] text-sm font-black"
-            onClick={onDetails}
-            type="button"
-          >
-            {t("details")}
-          </button>
-          <button
-            className="h-10 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-            onClick={onOrder}
-            type="button"
-          >
-            {t("order")}
-          </button>
+          {product.optionSummary ? (
+            <p className="hidden text-sm font-semibold leading-5 text-[#5b3b07] sm:line-clamp-2">
+              {text(product.optionSummary, locale)}
+            </p>
+          ) : null}
+          <ProductSpecs product={product} t={t} />
         </div>
+      </button>
+      <div className="grid grid-cols-1 gap-2 p-2 pt-0 sm:grid-cols-2 sm:p-4 sm:pt-0">
+        <button
+          className="hidden h-10 rounded-lg border border-[#ead9a2] text-sm font-black sm:block"
+          onClick={onDetails}
+          type="button"
+        >
+          {t("details")}
+        </button>
+        <button
+          className="h-9 rounded-lg bg-[#ffbc0d] text-xs font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 sm:h-10 sm:text-sm"
+          onClick={onOrder}
+          type="button"
+        >
+          {t("order")}
+        </button>
       </div>
     </article>
   );
@@ -590,7 +1300,7 @@ function ProductSpecs({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2 text-xs">
+    <div className="hidden grid-cols-2 gap-2 text-xs sm:grid">
       {specs.slice(0, 4).map((spec) => (
         <div
           className="min-w-0 rounded-md border border-[#f0df9f] bg-[#fffdf5] px-2 py-1.5"
@@ -943,52 +1653,103 @@ function AuthModal({
   onSubmit: (profile: UserProfile) => void;
   t: ReturnType<typeof useTranslations<"app">>;
 }) {
-  const [name, setName] = useState("JUTSU User");
-  const [email, setEmail] = useState("user@jutsu.app");
-  const [phone, setPhone] = useState("01012345678");
-  const [password, setPassword] = useState("jutsu2026");
-  const [code, setCode] = useState("123456");
-  const [identity, setIdentity] = useState<AuthIdentity>("email");
-  const [role, setRole] = useState<AccountRole>("buyer");
-  const [showPassword, setShowPassword] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("user@jutsu.app");
+  const [loginPassword, setLoginPassword] = useState("jutsu2026");
+  const [loginPhone, setLoginPhone] = useState("01012345678");
+  const [loginCode, setLoginCode] = useState("");
+  const [loginSmsSent, setLoginSmsSent] = useState(false);
+  const [loginSmsVerified, setLoginSmsVerified] = useState(false);
+  const [registerName, setRegisterName] = useState("JUTSU User");
+  const [registerEmail, setRegisterEmail] = useState("user@jutsu.app");
+  const [registerPassword, setRegisterPassword] = useState("jutsu2026");
+  const [registerConfirmPassword, setRegisterConfirmPassword] =
+    useState("jutsu2026");
+  const [registerPhone, setRegisterPhone] = useState("01012345678");
+  const [registerCode, setRegisterCode] = useState("");
+  const [registerSmsSent, setRegisterSmsSent] = useState(false);
+  const [registerSmsVerified, setRegisterSmsVerified] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const submitProfile = () => {
-    const cleanPhone = phone.replace(/\D/g, "");
-    const identityIsValid =
-      identity === "email" ? email.includes("@") : cleanPhone.length >= 8;
-    const passwordIsValid = password.length >= 8 && /\d/.test(password);
+  const loginPhoneValid = isValidKoreanPhone(loginPhone);
+  const registerPhoneValid = isValidKoreanPhone(registerPhone);
 
-    if (!identityIsValid || !passwordIsValid) {
+  const submitEmailLogin = () => {
+    const passwordIsValid =
+      loginPassword.length >= 8 && /\d/.test(loginPassword);
+
+    if (!isValidEmail(loginEmail) || !passwordIsValid) {
       setError(t("authError"));
       return;
     }
 
     onSubmit({
-      name: name.trim() || "JUTSU User",
-      email: identity === "email" ? email : `${cleanPhone}@phone.jutsu.app`,
-      phone: identity === "phone" ? phone : undefined,
-      role,
+      name: loginEmail.split("@")[0] || "JUTSU User",
+      email: loginEmail,
+      role: "buyer",
     });
   };
 
-  const submitSocial = (provider: "Google" | "Kakao" | "Naver") => {
+  const submitGoogleLogin = () => {
     onSubmit({
-      name: `${provider} User`,
-      email: `${provider.toLowerCase()}@jutsu.app`,
-      role,
+      name: "Google User",
+      email: "google@jutsu.app",
+      role: "buyer",
+    });
+  };
+
+  const submitPhoneLogin = () => {
+    if (!loginPhoneValid || !loginSmsVerified) {
+      setError(t("phoneCodeRequired"));
+      return;
+    }
+
+    const cleanPhone = loginPhone.replace(/\D/g, "");
+    onSubmit({
+      name: "JUTSU User",
+      email: `${cleanPhone}@phone.jutsu.app`,
+      phone: loginPhone,
+      role: "buyer",
+    });
+  };
+
+  const submitRegister = () => {
+    const passwordIsValid =
+      registerPassword.length >= 8 && /\d/.test(registerPassword);
+
+    if (!isValidEmail(registerEmail) || !passwordIsValid) {
+      setError(t("authError"));
+      return;
+    }
+
+    if (registerPassword !== registerConfirmPassword) {
+      setError(t("passwordMismatch"));
+      return;
+    }
+
+    if (!registerPhoneValid || !registerSmsVerified) {
+      setError(t("phoneCodeRequired"));
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError(t("termsRequired"));
+      return;
+    }
+
+    onSubmit({
+      name: registerName.trim() || "JUTSU User",
+      email: registerEmail,
+      phone: registerPhone,
+      role: "buyer",
     });
   };
 
   return (
     <Modal onClose={onClose}>
-      <form
-        className="w-full max-w-lg p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitProfile();
-        }}
-      >
+      <div className="w-full max-w-3xl p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-black uppercase text-[#7a5a15]">
@@ -998,7 +1759,7 @@ function AuthModal({
               {mode === "login" ? t("welcomeBack") : t("createAccount")}
             </h2>
             <p className="mt-2 text-sm leading-6 text-[#7a5a15]">
-              {t("authCopy")}
+              {mode === "login" ? t("loginCopy") : t("registerCopy")}
             </p>
           </div>
           <button
@@ -1011,210 +1772,260 @@ function AuthModal({
           </button>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2 rounded-lg bg-[#fff2bf] p-1">
-          <button
-            className={`h-10 rounded-md text-sm font-black ${
-              mode === "login" ? "bg-[#ffbc0d] text-[#3a2400]" : "text-[#6f5724]"
-            }`}
-            onClick={() => {
-              setError("");
-              onMode("login");
-            }}
-            type="button"
-          >
-            {t("login")}
-          </button>
-          <button
-            className={`h-10 rounded-md text-sm font-black ${
-              mode === "register"
-                ? "bg-[#ffbc0d] text-[#3a2400]"
-                : "text-[#6f5724]"
-            }`}
-            onClick={() => {
-              setError("");
-              onMode("register");
-            }}
-            type="button"
-          >
-            {t("register")}
-          </button>
-        </div>
+        {mode === "login" ? (
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <section className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
+              <div className="mb-4 flex items-center gap-2">
+                <Mail className="size-5 text-[#d62828]" aria-hidden />
+                <h3 className="text-base font-black">{t("emailLogin")}</h3>
+              </div>
+              <div className="space-y-3">
+                <button
+                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400]"
+                  onClick={submitGoogleLogin}
+                  type="button"
+                >
+                  {t("loginWithGoogle")}
+                </button>
+                <div className="flex items-center gap-3 text-xs font-black uppercase text-[#8a6a20]">
+                  <span className="h-px flex-1 bg-[#ead9a2]" />
+                  {t("orEmail")}
+                  <span className="h-px flex-1 bg-[#ead9a2]" />
+                </div>
+                <input
+                  autoComplete="email"
+                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                  onChange={(event) => {
+                    setError("");
+                    setLoginEmail(event.target.value);
+                  }}
+                  placeholder={t("email")}
+                  type="email"
+                  value={loginEmail}
+                />
+                <PasswordInput
+                  autoComplete="current-password"
+                  onChange={(value) => {
+                    setError("");
+                    setLoginPassword(value);
+                  }}
+                  placeholder={t("password")}
+                  showPassword={showLoginPassword}
+                  t={t}
+                  value={loginPassword}
+                  onTogglePassword={() =>
+                    setShowLoginPassword((visible) => !visible)
+                  }
+                />
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <label className="flex items-center gap-2 font-bold text-[#7a5a15]">
+                    <input
+                      className="size-4 accent-[#ffbc0d]"
+                      defaultChecked
+                      type="checkbox"
+                    />
+                    {t("rememberMe")}
+                  </label>
+                  <button className="font-black text-[#0e7490]" type="button">
+                    {t("forgotPassword")}
+                  </button>
+                </div>
+                <button
+                  className="h-11 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
+                  onClick={submitEmailLogin}
+                  type="button"
+                >
+                  {t("login")}
+                </button>
+              </div>
+            </section>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <button
-            className="h-11 rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400]"
-            onClick={() => submitSocial("Google")}
-            type="button"
-          >
-            {t("socialGoogle")}
-          </button>
-          <button
-            className="h-11 rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400]"
-            onClick={() => submitSocial("Kakao")}
-            type="button"
-          >
-            {t("socialKakao")}
-          </button>
-          <button
-            className="h-11 rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400]"
-            onClick={() => submitSocial("Naver")}
-            type="button"
-          >
-            {t("socialNaver")}
-          </button>
-        </div>
-
-        <div className="my-4 flex items-center gap-3 text-xs font-black uppercase text-[#8a6a20]">
-          <span className="h-px flex-1 bg-[#ead9a2]" />
-          {t("orEmail")}
-          <span className="h-px flex-1 bg-[#ead9a2]" />
-        </div>
-
-        {mode === "register" ? (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <AuthRoleButton
-              active={role === "buyer"}
-              description={t("buyerHint")}
-              icon={<UserRound className="size-4" />}
-              label={t("buyerAccount")}
-              onClick={() => setRole("buyer")}
-            />
-            <AuthRoleButton
-              active={role === "seller"}
-              description={t("sellerHint")}
-              icon={<Store className="size-4" />}
-              label={t("sellerAccount")}
-              onClick={() => setRole("seller")}
-            />
+            <section className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
+              <div className="mb-4 flex items-center gap-2">
+                <Phone className="size-5 text-[#0e7490]" aria-hidden />
+                <h3 className="text-base font-black">{t("phoneLogin")}</h3>
+              </div>
+              <div className="space-y-3">
+                <input
+                  autoComplete="tel"
+                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                  onChange={(event) => {
+                    setError("");
+                    setLoginPhone(event.target.value);
+                    setLoginSmsSent(false);
+                    setLoginSmsVerified(false);
+                    setLoginCode("");
+                  }}
+                  placeholder={t("phone")}
+                  type="tel"
+                  value={loginPhone}
+                />
+                {loginPhoneValid ? (
+                  <button
+                    className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-4 text-sm font-black text-[#3a2400]"
+                    onClick={() => {
+                      setError("");
+                      setLoginSmsSent(true);
+                      setLoginSmsVerified(false);
+                    }}
+                    type="button"
+                  >
+                    {t("sendSmsCode")}
+                  </button>
+                ) : (
+                  <p className="text-xs font-semibold leading-5 text-[#7a5a15]">
+                    {t("phoneFormatHint")}
+                  </p>
+                )}
+                {loginSmsSent ? (
+                  <SmsCodeBox
+                    code={loginCode}
+                    isVerified={loginSmsVerified}
+                    onChange={setLoginCode}
+                    onVerify={() => {
+                      if (loginCode === "123456") {
+                        setError("");
+                        setLoginSmsVerified(true);
+                      } else {
+                        setError(t("wrongCode"));
+                      }
+                    }}
+                    t={t}
+                  />
+                ) : null}
+                <button
+                  className="h-11 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!loginSmsVerified}
+                  onClick={submitPhoneLogin}
+                  type="button"
+                >
+                  {t("loginWithPhone")}
+                </button>
+              </div>
+            </section>
           </div>
-        ) : null}
-
-        <div className="mt-4 space-y-3">
-          {mode === "register" ? (
-            <input
-              autoComplete="name"
-              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t("name")}
-              value={name}
-            />
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#fff2bf] p-1">
-            <button
-              className={`flex h-10 items-center justify-center gap-2 rounded-md text-sm font-black ${
-                identity === "email"
-                  ? "bg-white text-[#3a2400] shadow-sm"
-                  : "text-[#6f5724]"
-              }`}
-              onClick={() => setIdentity("email")}
-              type="button"
-            >
-              <Mail className="size-4" aria-hidden />
-              {t("useEmail")}
-            </button>
-            <button
-              className={`flex h-10 items-center justify-center gap-2 rounded-md text-sm font-black ${
-                identity === "phone"
-                  ? "bg-white text-[#3a2400] shadow-sm"
-                  : "text-[#6f5724]"
-              }`}
-              onClick={() => setIdentity("phone")}
-              type="button"
-            >
-              <Phone className="size-4" aria-hidden />
-              {t("usePhone")}
-            </button>
-          </div>
-
-          {identity === "email" ? (
-            <input
-              autoComplete="email"
-              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={t("email")}
-              type="email"
-              value={email}
-            />
-          ) : (
-            <input
-              autoComplete="tel"
-              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder={t("phone")}
-              type="tel"
-              value={phone}
-            />
-          )}
-
-          <div className="relative">
-            <input
-              autoComplete={
-                mode === "register" ? "new-password" : "current-password"
-              }
-              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 pr-24 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={t("password")}
-              type={showPassword ? "text" : "password"}
-              value={password}
-            />
-            <button
-              className="absolute right-2 top-1/2 flex h-8 -translate-y-1/2 items-center gap-1 rounded-md px-2 text-xs font-black text-[#7a5a15]"
-              onClick={() => setShowPassword((value) => !value)}
-              type="button"
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" aria-hidden />
-              ) : (
-                <Eye className="size-4" aria-hidden />
-              )}
-              {showPassword ? t("hidePassword") : t("showPassword")}
-            </button>
-          </div>
-
-          {mode === "register" ? (
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        ) : (
+          <section className="mt-5 rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <input
-                autoComplete="one-time-code"
-                className="h-11 rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                onChange={(event) => setCode(event.target.value)}
-                placeholder={t("verificationCode")}
-                value={code}
+                autoComplete="name"
+                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                onChange={(event) => setRegisterName(event.target.value)}
+                placeholder={t("name")}
+                value={registerName}
               />
-              <button
-                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-4 text-sm font-black text-[#3a2400]"
-                type="button"
-              >
-                {t("sendCode")}
-              </button>
+              <input
+                autoComplete="email"
+                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                onChange={(event) => {
+                  setError("");
+                  setRegisterEmail(event.target.value);
+                }}
+                placeholder={t("email")}
+                type="email"
+                value={registerEmail}
+              />
+              <PasswordInput
+                autoComplete="new-password"
+                onChange={(value) => {
+                  setError("");
+                  setRegisterPassword(value);
+                }}
+                placeholder={t("password")}
+                showPassword={showRegisterPassword}
+                t={t}
+                value={registerPassword}
+                onTogglePassword={() =>
+                  setShowRegisterPassword((visible) => !visible)
+                }
+              />
+              <input
+                autoComplete="new-password"
+                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                onChange={(event) => {
+                  setError("");
+                  setRegisterConfirmPassword(event.target.value);
+                }}
+                placeholder={t("confirmPassword")}
+                type="password"
+                value={registerConfirmPassword}
+              />
+              <div className="space-y-2 sm:col-span-2">
+                <input
+                  autoComplete="tel"
+                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+                  onChange={(event) => {
+                    setError("");
+                    setRegisterPhone(event.target.value);
+                    setRegisterSmsSent(false);
+                    setRegisterSmsVerified(false);
+                    setRegisterCode("");
+                  }}
+                  placeholder={t("phone")}
+                  type="tel"
+                  value={registerPhone}
+                />
+                {registerPhoneValid ? (
+                  <button
+                    className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-4 text-sm font-black text-[#3a2400]"
+                    onClick={() => {
+                      setError("");
+                      setRegisterSmsSent(true);
+                      setRegisterSmsVerified(false);
+                    }}
+                    type="button"
+                  >
+                    {t("sendSmsCode")}
+                  </button>
+                ) : (
+                  <p className="text-xs font-semibold leading-5 text-[#7a5a15]">
+                    {t("phoneFormatHint")}
+                  </p>
+                )}
+                {registerSmsSent ? (
+                  <SmsCodeBox
+                    code={registerCode}
+                    isVerified={registerSmsVerified}
+                    onChange={setRegisterCode}
+                    onVerify={() => {
+                      if (registerCode === "123456") {
+                        setError("");
+                        setRegisterSmsVerified(true);
+                      } else {
+                        setError(t("wrongCode"));
+                      }
+                    }}
+                    t={t}
+                  />
+                ) : null}
+              </div>
             </div>
-          ) : null}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-          <label className="flex items-center gap-2 font-bold text-[#7a5a15]">
-            <input
-              className="size-4 accent-[#ffbc0d]"
-              defaultChecked
-              type="checkbox"
-            />
-            {t("rememberMe")}
-          </label>
-          {mode === "login" ? (
-            <button className="font-black text-[#0e7490]" type="button">
-              {t("forgotPassword")}
+            <p className="mt-3 text-xs font-semibold leading-5 text-[#7a5a15]">
+              {t("passwordHelp")}
+            </p>
+            <label className="mt-4 flex items-start gap-2 text-sm font-bold text-[#7a5a15]">
+              <input
+                checked={acceptedTerms}
+                className="mt-0.5 size-4 accent-[#ffbc0d]"
+                onChange={(event) => {
+                  setError("");
+                  setAcceptedTerms(event.target.checked);
+                }}
+                type="checkbox"
+              />
+              <span>{t("agreeTerms")}</span>
+            </label>
+            <button
+              className="mt-5 h-12 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!registerSmsVerified || !acceptedTerms}
+              onClick={submitRegister}
+              type="button"
+            >
+              {t("register")}
             </button>
-          ) : null}
-        </div>
+          </section>
+        )}
 
-        <p className="mt-3 text-xs font-semibold leading-5 text-[#7a5a15]">
-          {mode === "register" ? t("passwordHelp") : t("authDemo")}
-        </p>
-        {mode === "register" ? (
-          <p className="mt-1 text-xs font-semibold leading-5 text-[#7a5a15]">
-            {t("terms")}
-          </p>
-        ) : null}
         {error ? (
           <p className="mt-3 rounded-lg bg-[#fff1f1] px-3 py-2 text-sm font-black text-[#b91c1c]">
             {error}
@@ -1222,55 +2033,103 @@ function AuthModal({
         ) : null}
 
         <button
-          className="mt-5 h-12 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-          type="submit"
-        >
-          {mode === "login" ? t("login") : t("createAccount")}
-        </button>
-
-        <button
           className="mt-3 w-full text-sm font-black text-[#0e7490]"
-          onClick={() => onMode(mode === "login" ? "register" : "login")}
+          onClick={() => {
+            setError("");
+            onMode(mode === "login" ? "register" : "login");
+          }}
           type="button"
         >
           {mode === "login" ? t("register") : t("login")}
         </button>
-      </form>
+        <p className="mt-3 text-center text-xs font-semibold leading-5 text-[#7a5a15]">
+          {t("authDemo")}
+        </p>
+      </div>
     </Modal>
   );
 }
 
-function AuthRoleButton({
-  active,
-  description,
-  icon,
-  label,
-  onClick,
+function PasswordInput({
+  autoComplete,
+  onChange,
+  onTogglePassword,
+  placeholder,
+  showPassword,
+  t,
+  value,
 }: {
-  active: boolean;
-  description: string;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
+  autoComplete: string;
+  onChange: (value: string) => void;
+  onTogglePassword: () => void;
+  placeholder: string;
+  showPassword: boolean;
+  t: ReturnType<typeof useTranslations<"app">>;
+  value: string;
 }) {
   return (
-    <button
-      className={`rounded-lg border p-3 text-left transition ${
-        active
-          ? "border-[#ffbc0d] bg-[#fff2bf] text-[#3a2400]"
-          : "border-[#ead9a2] bg-white text-[#3a2400]"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      <span className="flex items-center gap-2 text-sm font-black">
-        {icon}
-        {label}
-      </span>
-      <span className="mt-1 block text-xs font-semibold leading-5 text-[#7a5a15]">
-        {description}
-      </span>
-    </button>
+    <div className="relative">
+      <input
+        autoComplete={autoComplete}
+        className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 pr-24 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        type={showPassword ? "text" : "password"}
+        value={value}
+      />
+      <button
+        className="absolute right-2 top-1/2 flex h-8 -translate-y-1/2 items-center gap-1 rounded-md px-2 text-xs font-black text-[#7a5a15]"
+        onClick={onTogglePassword}
+        type="button"
+      >
+        {showPassword ? (
+          <EyeOff className="size-4" aria-hidden />
+        ) : (
+          <Eye className="size-4" aria-hidden />
+        )}
+        {showPassword ? t("hidePassword") : t("showPassword")}
+      </button>
+    </div>
+  );
+}
+
+function SmsCodeBox({
+  code,
+  isVerified,
+  onChange,
+  onVerify,
+  t,
+}: {
+  code: string;
+  isVerified: boolean;
+  onChange: (value: string) => void;
+  onVerify: () => void;
+  t: ReturnType<typeof useTranslations<"app">>;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+      <input
+        autoComplete="one-time-code"
+        className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={t("verificationCode")}
+        value={code}
+      />
+      <button
+        className={`h-11 rounded-lg px-4 text-sm font-black ${
+          isVerified
+            ? "bg-[#e8f7f2] text-[#0f766e]"
+            : "bg-[#3a2400] text-white"
+        }`}
+        onClick={onVerify}
+        type="button"
+      >
+        {isVerified ? t("smsVerified") : t("verifyCode")}
+      </button>
+      <p className="text-xs font-semibold leading-5 text-[#7a5a15] sm:col-span-2">
+        {t("smsDemoCode")}
+      </p>
+    </div>
   );
 }
 
@@ -1423,6 +2282,15 @@ function getProductGroupIcon(group: ProductGroup) {
   };
 
   return icons[group];
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isValidKoreanPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return /^01\d{8,9}$/.test(digits);
 }
 
 function filterRestaurants(
