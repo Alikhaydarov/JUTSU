@@ -30,10 +30,24 @@ export type Product = {
   id: string;
   name: LocalizedText;
   citySlug: string;
-  category: "phone" | "laptop" | "home" | "appliance" | "accessory";
+  category:
+    | "phone"
+    | "laptop"
+    | "home"
+    | "appliance"
+    | "accessory"
+    | "clothing"
+    | "shoes"
+    | "furniture";
   condition: "new" | "used" | "refurbished";
   priceKrw: number;
   imageUrl: string;
+  brand?: string;
+  size?: string;
+  color?: string;
+  stock?: number;
+  tags?: string[];
+  optionSummary?: LocalizedText;
   sellerName: string;
   trustLevel: "verified" | "community" | "demo";
   contact: string;
@@ -58,7 +72,7 @@ export type Restaurant = {
 export type Guide = {
   id: string;
   citySlug: string;
-  category: "setup" | "shopping" | "food" | "transport";
+  category: "setup" | "shopping" | "food" | "clothing";
   title: LocalizedText;
   summary: LocalizedText;
 };

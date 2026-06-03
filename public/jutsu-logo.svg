@@ -1,7 +1,7 @@
 <svg width="172" height="48" viewBox="0 0 172 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="1" y="1" width="46" height="46" rx="13" fill="#071814"/>
-  <circle cx="24" cy="24" r="12" stroke="#06B6D4" stroke-width="3"/>
-  <path d="M18 30L30 18" stroke="#F97316" stroke-width="4" stroke-linecap="round"/>
-  <path d="M21 18H30V27" stroke="#F97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="58" y="34" fill="#071814" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="900">JUTSU</text>
+  <rect x="1" y="1" width="46" height="46" rx="13" fill="#FFBC0D"/>
+  <circle cx="24" cy="24" r="12" stroke="#3A2400" stroke-width="3"/>
+  <path d="M18 30L30 18" stroke="#D62828" stroke-width="4" stroke-linecap="round"/>
+  <path d="M21 18H30V27" stroke="#D62828" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="58" y="34" fill="#3A2400" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="900">JUTSU</text>
 </svg>

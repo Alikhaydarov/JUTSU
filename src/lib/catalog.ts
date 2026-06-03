@@ -50,9 +50,12 @@ export async function getCatalogData({
   );
   const cityGuides = guides.filter((guide) => guide.citySlug === selectedCity);
 
+  const localProducts = cityProducts.length
+    ? cityProducts
+    : buildFallbackProducts(selectedCityData);
   const finalProducts = djangoCatalog?.products.length
     ? djangoCatalog.products
-    : [...cityProducts, ...dummyProducts];
+    : [...localProducts, ...dummyProducts];
   const finalRestaurants = djangoCatalog?.restaurants.length
     ? djangoCatalog.restaurants
     : cityRestaurants.length
@@ -169,6 +172,16 @@ async function getDummyProducts(citySlug: string): Promise<Product[]> {
         condition: "new",
         priceKrw,
         imageUrl,
+        brand: String(item.brand ?? "Demo brand"),
+        color: "API",
+        stock: Math.max(1, Math.round(Number(item.stock ?? 3))),
+        tags: ["api", "tech", "demo"],
+        optionSummary: {
+          uz: "DummyJSON orqali vaqtinchalik API mahsuloti",
+          ru: "Temporary API product from DummyJSON",
+          en: "Temporary API product from DummyJSON",
+          ko: "Temporary API product from DummyJSON",
+        },
         sellerName: "DummyJSON public API",
         trustLevel: "demo",
         contact: "https://dummyjson.com",
@@ -208,6 +221,161 @@ async function getFoodIdeas(): Promise<FoodIdea[]> {
   } catch {
     return fallbackFoodIdeas();
   }
+}
+
+function buildFallbackProducts(city: City): Product[] {
+  const cityName = city.name.en;
+
+  return [
+    {
+      id: `${city.slug}-starter-phone`,
+      name: {
+        uz: `${cityName}: SIM-free starter phone`,
+        ru: `${cityName}: SIM-free starter phone`,
+        en: `${cityName}: SIM-free starter phone`,
+        ko: `${cityName}: SIM-free starter phone`,
+      },
+      citySlug: city.slug,
+      category: "phone",
+      condition: "refurbished",
+      priceKrw: 230000,
+      imageUrl:
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+      brand: "Samsung",
+      color: "Graphite",
+      stock: 3,
+      tags: ["phone", "starter", "sim-free"],
+      optionSummary: {
+        uz: "128GB, charger bor, SIM-free",
+        ru: "128GB, charger included, SIM-free",
+        en: "128GB, charger included, SIM-free",
+        ko: "128GB, charger included, SIM-free",
+      },
+      sellerName: `${cityName} Mobile Desk`,
+      trustLevel: "community",
+      contact: "JUTSU request",
+      source: "JUTSU city fallback",
+    },
+    {
+      id: `${city.slug}-starter-clothing`,
+      name: {
+        uz: `${cityName}: hoodie va basic top`,
+        ru: `${cityName}: hoodie and basic top`,
+        en: `${cityName}: hoodie and basic top`,
+        ko: `${cityName}: hoodie and basic top`,
+      },
+      citySlug: city.slug,
+      category: "clothing",
+      condition: "new",
+      priceKrw: 42000,
+      imageUrl:
+        "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=900&q=80",
+      brand: "JUTSU Basic",
+      size: "M / L / XL",
+      color: "Grey",
+      stock: 12,
+      tags: ["clothing", "hoodie", "basic"],
+      optionSummary: {
+        uz: "M-L-XL, kundalik kiyim uchun",
+        ru: "M-L-XL, for daily wear",
+        en: "M-L-XL, for daily wear",
+        ko: "M-L-XL, for daily wear",
+      },
+      sellerName: `${cityName} Fashion Desk`,
+      trustLevel: "verified",
+      contact: "JUTSU request",
+      source: "JUTSU city fallback",
+    },
+    {
+      id: `${city.slug}-starter-shoes`,
+      name: {
+        uz: `${cityName}: daily sneakers`,
+        ru: `${cityName}: daily sneakers`,
+        en: `${cityName}: daily sneakers`,
+        ko: `${cityName}: daily sneakers`,
+      },
+      citySlug: city.slug,
+      category: "shoes",
+      condition: "new",
+      priceKrw: 65000,
+      imageUrl:
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+      brand: "Daily Step",
+      size: "240-285mm",
+      color: "White",
+      stock: 10,
+      tags: ["shoes", "sneakers", "walking"],
+      optionSummary: {
+        uz: "240-285mm, ko'p yurishga qulay",
+        ru: "240-285mm, comfortable for walking",
+        en: "240-285mm, comfortable for walking",
+        ko: "240-285mm, comfortable for walking",
+      },
+      sellerName: `${cityName} Street Gear`,
+      trustLevel: "community",
+      contact: "JUTSU request",
+      source: "JUTSU city fallback",
+    },
+    {
+      id: `${city.slug}-starter-kitchen`,
+      name: {
+        uz: `${cityName}: mini oshxona seti`,
+        ru: `${cityName}: mini kitchen set`,
+        en: `${cityName}: mini kitchen set`,
+        ko: `${cityName}: mini kitchen set`,
+      },
+      citySlug: city.slug,
+      category: "appliance",
+      condition: "new",
+      priceKrw: 76000,
+      imageUrl:
+        "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=80",
+      brand: "CookMate",
+      color: "Steel",
+      stock: 7,
+      tags: ["kitchen", "pan", "starter"],
+      optionSummary: {
+        uz: "Pan, pot, knife, spoon set",
+        ru: "Pan, pot, knife, spoon set",
+        en: "Pan, pot, knife, spoon set",
+        ko: "Pan, pot, knife, spoon set",
+      },
+      sellerName: `${cityName} Kitchen Kit`,
+      trustLevel: "verified",
+      contact: "JUTSU request",
+      source: "JUTSU city fallback",
+    },
+    {
+      id: `${city.slug}-starter-bedding`,
+      name: {
+        uz: `${cityName}: bedding starter pack`,
+        ru: `${cityName}: bedding starter pack`,
+        en: `${cityName}: bedding starter pack`,
+        ko: `${cityName}: bedding starter pack`,
+      },
+      citySlug: city.slug,
+      category: "home",
+      condition: "new",
+      priceKrw: 59000,
+      imageUrl:
+        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
+      brand: "RoomFit",
+      size: "Single",
+      color: "Ivory",
+      stock: 9,
+      tags: ["room", "bedding", "starter"],
+      optionSummary: {
+        uz: "Single blanket, pillow, cover",
+        ru: "Single blanket, pillow, cover",
+        en: "Single blanket, pillow, cover",
+        ko: "Single blanket, pillow, cover",
+      },
+      sellerName: `${cityName} Room Starter`,
+      trustLevel: "verified",
+      contact: "JUTSU request",
+      source: "JUTSU city fallback",
+    },
+  ];
 }
 
 function fallbackFoodIdeas(): FoodIdea[] {
@@ -317,10 +485,10 @@ function buildFallbackGuides(city: City): Guide[] {
         ko: `${cityName}: newcomer map`,
       },
       summary: {
-        uz: "SIM, transport, arzon texnika va birinchi ovqat joylarini bitta checklistga yig'ish.",
-        ru: "SIM, transport, budget tech, and first food spots in one checklist.",
-        en: "SIM, transport, budget tech, and first food spots in one checklist.",
-        ko: "SIM, transport, budget tech, and first food spots in one checklist.",
+        uz: "SIM, arzon texnika, kiyim-kechak, mini oshxona va birinchi ovqat joylarini bitta checklistga yig'ish.",
+        ru: "SIM, budget tech, clothing, mini kitchen, and first food spots in one checklist.",
+        en: "SIM, budget tech, clothing, mini kitchen, and first food spots in one checklist.",
+        ko: "SIM, budget tech, clothing, mini kitchen, and first food spots in one checklist.",
       },
     },
     {
@@ -334,10 +502,10 @@ function buildFallbackGuides(city: City): Guide[] {
         ko: `${cityName}: safe shopping`,
       },
       summary: {
-        uz: "Ishlatilgan texnika olishda narx, holat, kafolat va uchrashuv joyi bo'yicha qisqa qoida.",
-        ru: "Quick rules for price, condition, warranty, and meeting spot when buying used tech.",
-        en: "Quick rules for price, condition, warranty, and meeting spot when buying used tech.",
-        ko: "Quick rules for price, condition, warranty, and meeting spot when buying used tech.",
+        uz: "Texnika, kiyim va oshxona buyumlarida narx, holat, o'lcham, kafolat va uchrashuv joyi bo'yicha qisqa qoida.",
+        ru: "Quick rules for price, condition, size, warranty, and meeting spot when buying tech, clothing, and kitchen items.",
+        en: "Quick rules for price, condition, size, warranty, and meeting spot when buying tech, clothing, and kitchen items.",
+        ko: "Quick rules for price, condition, size, warranty, and meeting spot when buying tech, clothing, and kitchen items.",
       },
     },
   ];
@@ -414,13 +582,26 @@ function toProduct(
     id,
     name: { uz: name, ru: name, en: name, ko: name },
     citySlug: stringField(item, "city") || citySlug,
-    category: "phone",
+    category: toProductCategory(stringField(item, "category")),
     condition: "used",
     priceKrw: price,
     imageUrl:
       stringField(item, "image") ||
       stringField(item, "imageUrl") ||
       "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+    brand: stringField(item, "brand") || undefined,
+    size: stringField(item, "size") || undefined,
+    color: stringField(item, "color") || undefined,
+    stock: Number(item.stock ?? 1),
+    tags: stringField(item, "tags")
+      ? stringField(item, "tags").split(",").map((tag) => tag.trim())
+      : [],
+    optionSummary: {
+      uz: stringField(item, "option_summary") || "Django listing",
+      ru: stringField(item, "option_summary") || "Django listing",
+      en: stringField(item, "option_summary") || "Django listing",
+      ko: stringField(item, "option_summary") || "Django listing",
+    },
     sellerName: stringField(item, "seller_name") || "Django seller",
     trustLevel: item.verified ? "verified" : "community",
     contact: stringField(item, "contact") || "Django contact",
@@ -469,6 +650,24 @@ function isProduct(item: Product | null): item is Product {
 
 function isRestaurant(item: Restaurant | null): item is Restaurant {
   return item !== null;
+}
+
+function toProductCategory(value: string): Product["category"] {
+  const normalized = value.toLowerCase();
+
+  if (
+    normalized === "clothing" ||
+    normalized === "shoes" ||
+    normalized === "furniture" ||
+    normalized === "laptop" ||
+    normalized === "home" ||
+    normalized === "appliance" ||
+    normalized === "accessory"
+  ) {
+    return normalized;
+  }
+
+  return "phone";
 }
 
 async function fetchWithTimeout(
