@@ -183,7 +183,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
   });
   const [panelMenuItems, setPanelMenuItems] = useState<PanelMenuItem[]>([]);
   const [panelNotice, setPanelNotice] = useState("");
-
   useEffect(() => {
     if (selectedCity === catalog.selectedCity) {
       return;
@@ -241,9 +240,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
       ? filteredProducts.length
       : activeTab === "restaurants"
         ? filteredRestaurants.length
-        : activeTab === "guides"
-          ? filteredGuides.length
-          : catalog.products.length + catalog.restaurants.length;
+        : filteredGuides.length;
 
   const startCheckout = (product: Product) => {
     setSelectedProduct(null);
@@ -401,6 +398,15 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               />
             </label>
 
+            <button
+              className="flex h-10 items-center gap-2 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-black text-[#3a2400] transition hover:border-[#ffbc0d]"
+              onClick={() => router.push(`/${locale}/panel`)}
+              type="button"
+            >
+              <PanelTopOpen className="size-4 text-[#0e7490]" aria-hidden />
+              {t("panel")}
+            </button>
+
             {user ? (
               <button
                 className="h-10 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-bold text-[#3a2400]"
@@ -461,7 +467,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               />
             </label>
 
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-[#fff2bf] p-1">
+            <div className="grid grid-cols-3 gap-1 rounded-lg bg-[#fff2bf] p-1">
               <TabButton
                 active={activeTab === "products"}
                 icon={<Laptop className="size-4" />}
@@ -479,12 +485,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 icon={<BookOpen className="size-4" />}
                 label={t("guides")}
                 onClick={() => setActiveTab("guides")}
-              />
-              <TabButton
-                active={activeTab === "panel"}
-                icon={<PanelTopOpen className="size-4" />}
-                label={t("panel")}
-                onClick={() => setActiveTab("panel")}
               />
             </div>
           </div>
