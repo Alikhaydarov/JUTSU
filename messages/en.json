@@ -144,7 +144,7 @@
     "sendSmsCode": "Verify with SMS code",
     "verifyCode": "Verify code",
     "smsVerified": "Verified",
-    "smsDemoCode": "Demo code: 123456. Real SMS will be sent when the backend is connected.",
+    "smsDemoCode": "Demo code: 123456. Real SMS will be sent through NAVER SENS or Twilio Verify when the backend is connected.",
     "phoneFormatHint": "Enter a Korean phone number like 01012345678.",
     "phoneCodeRequired": "Verify the phone number with an SMS code.",
     "wrongCode": "The code is wrong. Demo code: 123456.",
@@ -182,6 +182,14 @@
     "address": "Address",
     "placeOrder": "Place order",
     "orderReady": "Order prepared",
+    "checkoutFlowTitle": "How real payment and SMS will work",
+    "paymentFlowClient": "Customer chooses",
+    "paymentFlowClientCopy": "Toss widget, Naver Pay, Kakao Pay, or Stripe Checkout opens from the frontend.",
+    "paymentFlowServer": "Backend confirms",
+    "paymentFlowServerCopy": "Django verifies orderId, amount, and paymentKey; the secret key stays server-side only.",
+    "paymentFlowSms": "SMS/receipt",
+    "paymentFlowSmsCopy": "Phone verification and order messages are sent through NAVER SENS or Twilio Verify.",
+    "checkoutSecureNote": "Next step: connect Django confirm API, webhooks, order status, and SMS code table.",
     "apiSoon": "Real payment connects when backend is ready"
   }
 }

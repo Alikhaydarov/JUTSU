@@ -144,7 +144,7 @@
     "sendSmsCode": "SMS kod orqali tasdiqlash",
     "verifyCode": "Kodni tasdiqlash",
     "smsVerified": "Tasdiqlandi",
-    "smsDemoCode": "Demo kod: 123456. Backend ulanganda real SMS yuboriladi.",
+    "smsDemoCode": "Demo kod: 123456. Backend ulanganda NAVER SENS yoki Twilio Verify orqali real SMS yuboriladi.",
     "phoneFormatHint": "Telefon raqamni Koreya formatida kiriting: 01012345678.",
     "phoneCodeRequired": "Telefon raqamni SMS kod bilan tasdiqlang.",
     "wrongCode": "Kod noto'g'ri. Demo kod: 123456.",
@@ -182,6 +182,14 @@
     "address": "Manzil",
     "placeOrder": "Buyurtmani tasdiqlash",
     "orderReady": "Buyurtma tayyorlandi",
+    "checkoutFlowTitle": "Real to'lov va SMS qanday ishlaydi",
+    "paymentFlowClient": "Mijoz tanlaydi",
+    "paymentFlowClientCopy": "Toss widget, Naver Pay, Kakao Pay yoki Stripe Checkout oynasi frontenddan ochiladi.",
+    "paymentFlowServer": "Backend tasdiqlaydi",
+    "paymentFlowServerCopy": "Django orderId, amount va paymentKey ni tekshiradi, secret key faqat serverda turadi.",
+    "paymentFlowSms": "SMS/receipt",
+    "paymentFlowSmsCopy": "Telefon tasdiqlash va order xabari NAVER SENS yoki Twilio Verify orqali yuboriladi.",
+    "checkoutSecureNote": "Keyingi bosqich: Django confirm API, webhook, order status va SMS kod jadvali ulanadi.",
     "apiSoon": "Backend ulanganda real to'lov ishlaydi"
   }
 }

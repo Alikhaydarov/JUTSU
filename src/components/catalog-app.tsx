@@ -7,12 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   BookOpen,
-  Boxes,
-  ChefHat,
   Check,
   ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
   CookingPot,
   CreditCard,
   Eye,
@@ -25,16 +21,12 @@ import {
   MessageCircle,
   PackageCheck,
   PackageSearch,
-  PanelTopOpen,
   Phone,
-  Plus,
-  Save,
   Search,
   ShieldCheck,
   ShoppingBag,
   Shirt,
   Star,
-  Store,
   Tags,
   Utensils,
   WalletCards,
@@ -55,7 +47,7 @@ type CatalogAppProps = {
   locale: Locale;
 };
 
-type ActiveTab = "products" | "restaurants" | "guides" | "panel";
+type ActiveTab = "products" | "restaurants" | "guides";
 type ProductGroup =
   | "all"
   | "tech"
@@ -70,41 +62,6 @@ type UserProfile = {
   email: string;
   phone?: string;
   role: AccountRole;
-};
-type PanelProductDraft = {
-  title: string;
-  brand: string;
-  category: Product["category"];
-  condition: Product["condition"];
-  price: string;
-  contact: string;
-  imageUrl: string;
-};
-type PanelRestaurantDraft = {
-  name: string;
-  cuisine: Restaurant["cuisine"];
-  priceBand: Restaurant["priceBand"];
-  address: string;
-  contact: string;
-  halalFriendly: boolean;
-  imageUrl: string;
-};
-type PanelMenuItem = {
-  id: string;
-  restaurantId: string;
-  name: string;
-  category: string;
-  price: number;
-  halalFriendly: boolean;
-  available: boolean;
-};
-type PanelMenuDraft = {
-  restaurantId: string;
-  name: string;
-  category: string;
-  price: string;
-  halalFriendly: boolean;
-  available: boolean;
 };
 type PaymentMethod =
   | "card"
@@ -151,38 +108,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
     "delivery"
   );
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [panelProductDraft, setPanelProductDraft] =
-    useState<PanelProductDraft>({
-      title: "Galaxy starter phone",
-      brand: "Samsung",
-      category: "phone",
-      condition: "used",
-      price: "250000",
-      contact: "Kakao: jutsu-seller",
-      imageUrl:
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-    });
-  const [panelRestaurantDraft, setPanelRestaurantDraft] =
-    useState<PanelRestaurantDraft>({
-      name: "JUTSU Local Kitchen",
-      cuisine: "halal",
-      priceBand: "mid",
-      address: "Incheon center",
-      contact: "010-0000-9000",
-      halalFriendly: true,
-      imageUrl:
-        "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-    });
-  const [panelMenuDraft, setPanelMenuDraft] = useState<PanelMenuDraft>({
-    restaurantId: "",
-    name: "Chicken bibimbap",
-    category: "Lunch",
-    price: "9000",
-    halalFriendly: true,
-    available: true,
-  });
-  const [panelMenuItems, setPanelMenuItems] = useState<PanelMenuItem[]>([]);
-  const [panelNotice, setPanelNotice] = useState("");
   useEffect(() => {
     if (selectedCity === catalog.selectedCity) {
       return;
@@ -248,116 +173,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
     setOrderPlaced(false);
   };
 
-  const addPanelProduct = () => {
-    const priceKrw = Math.max(1000, Number(panelProductDraft.price) || 0);
-    const title = panelProductDraft.title.trim() || "JUTSU tech item";
-    const nextProduct: Product = {
-      id: `panel-tech-${Date.now()}`,
-      name: { uz: title, ru: title, en: title, ko: title },
-      citySlug: selectedCity,
-      category: panelProductDraft.category,
-      condition: panelProductDraft.condition,
-      priceKrw,
-      imageUrl:
-        panelProductDraft.imageUrl ||
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-      brand: panelProductDraft.brand || undefined,
-      stock: 1,
-      tags: ["panel", "tech"],
-      optionSummary: {
-        uz: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
-        ru: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
-        en: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
-        ko: `${panelProductDraft.brand} · ${panelProductDraft.condition}`,
-      },
-      sellerName: "JUTSU seller panel",
-      trustLevel: "community",
-      contact: panelProductDraft.contact,
-      source: "JUTSU panel demo",
-    };
-
-    setCatalog((current) => ({
-      ...current,
-      products: [nextProduct, ...current.products],
-    }));
-    setPanelNotice(t("panelProductAdded"));
-  };
-
-  const addPanelRestaurant = () => {
-    const title = panelRestaurantDraft.name.trim() || "JUTSU Restaurant";
-    const nextRestaurant: Restaurant = {
-      id: `panel-restaurant-${Date.now()}`,
-      name: { uz: title, ru: title, en: title, ko: title },
-      citySlug: selectedCity,
-      cuisine: panelRestaurantDraft.cuisine,
-      priceBand: panelRestaurantDraft.priceBand,
-      halalFriendly: panelRestaurantDraft.halalFriendly,
-      rating: 4.6,
-      imageUrl:
-        panelRestaurantDraft.imageUrl ||
-        "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-      address: {
-        uz: panelRestaurantDraft.address,
-        ru: panelRestaurantDraft.address,
-        en: panelRestaurantDraft.address,
-        ko: panelRestaurantDraft.address,
-      },
-      menuHighlights: [],
-      contact: panelRestaurantDraft.contact,
-      source: "JUTSU restaurant panel",
-    };
-
-    setCatalog((current) => ({
-      ...current,
-      restaurants: [nextRestaurant, ...current.restaurants],
-    }));
-    setPanelMenuDraft((current) => ({
-      ...current,
-      restaurantId: nextRestaurant.id,
-    }));
-    setPanelNotice(t("panelRestaurantAdded"));
-  };
-
-  const addPanelMenuItem = () => {
-    const restaurantsForCity = catalog.restaurants.filter(
-      (restaurant) => restaurant.citySlug === selectedCity
-    );
-    const restaurantId = panelMenuDraft.restaurantId || restaurantsForCity[0]?.id;
-
-    if (!restaurantId) {
-      setPanelNotice(t("panelNeedRestaurant"));
-      return;
-    }
-
-    const menuName = panelMenuDraft.name.trim() || "Menu item";
-    const nextMenuItem: PanelMenuItem = {
-      id: `panel-menu-${Date.now()}`,
-      restaurantId,
-      name: menuName,
-      category: panelMenuDraft.category || "Menu",
-      price: Math.max(1000, Number(panelMenuDraft.price) || 0),
-      halalFriendly: panelMenuDraft.halalFriendly,
-      available: panelMenuDraft.available,
-    };
-
-    setPanelMenuItems((current) => [nextMenuItem, ...current]);
-    setCatalog((current) => ({
-      ...current,
-      restaurants: current.restaurants.map((restaurant) =>
-        restaurant.id === restaurantId
-          ? {
-              ...restaurant,
-              menuHighlights: [
-                { uz: menuName, ru: menuName, en: menuName, ko: menuName },
-                ...restaurant.menuHighlights,
-              ].slice(0, 4),
-            }
-          : restaurant
-      ),
-    }));
-    setPanelNotice(t("panelMenuAdded"));
-  };
-
   return (
     <main className="min-h-screen bg-[#fff8df] text-[#3a2400]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-4 sm:px-6 lg:px-8">
@@ -397,15 +212,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 aria-hidden
               />
             </label>
-
-            <button
-              className="flex h-10 items-center gap-2 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-black text-[#3a2400] transition hover:border-[#ffbc0d]"
-              onClick={() => router.push(`/${locale}/panel`)}
-              type="button"
-            >
-              <PanelTopOpen className="size-4 text-[#0e7490]" aria-hidden />
-              {t("panel")}
-            </button>
 
             {user ? (
               <button
@@ -496,7 +302,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               {text(selectedCityData.name, locale)}
             </h1>
             <p className="text-sm font-medium text-[#7a5a15]">
-              {t("allCities")} ·{" "}
+              {t("allCities")} -{" "}
               {activeTab === "products" ? t("marketNote") : t("newcomer")}
             </p>
           </div>
@@ -508,9 +314,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 ? t("products")
                 : activeTab === "restaurants"
                   ? t("restaurants")
-                  : activeTab === "guides"
-                    ? t("guides")
-                    : t("panel")}
+                  : t("guides")}
             </span>
           </div>
         </div>
@@ -559,26 +363,6 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               <GuideCard key={guide.id} guide={guide} locale={locale} />
             ))}
           </div>
-        ) : null}
-
-        {activeTab === "panel" ? (
-          <PartnerPanel
-            catalog={catalog}
-            locale={locale}
-            menuDraft={panelMenuDraft}
-            menuItems={panelMenuItems}
-            notice={panelNotice}
-            onAddMenuItem={addPanelMenuItem}
-            onAddProduct={addPanelProduct}
-            onAddRestaurant={addPanelRestaurant}
-            onMenuDraft={setPanelMenuDraft}
-            onProductDraft={setPanelProductDraft}
-            onRestaurantDraft={setPanelRestaurantDraft}
-            productDraft={panelProductDraft}
-            restaurantDraft={panelRestaurantDraft}
-            selectedCity={selectedCity}
-            t={t}
-          />
         ) : null}
 
         {currentCount === 0 ? (
@@ -694,503 +478,6 @@ function ProductGroupBar({
         })}
       </div>
     </div>
-  );
-}
-
-function PartnerPanel({
-  catalog,
-  locale,
-  menuDraft,
-  menuItems,
-  notice,
-  onAddMenuItem,
-  onAddProduct,
-  onAddRestaurant,
-  onMenuDraft,
-  onProductDraft,
-  onRestaurantDraft,
-  productDraft,
-  restaurantDraft,
-  selectedCity,
-  t,
-}: {
-  catalog: CatalogData;
-  locale: Locale;
-  menuDraft: PanelMenuDraft;
-  menuItems: PanelMenuItem[];
-  notice: string;
-  onAddMenuItem: () => void;
-  onAddProduct: () => void;
-  onAddRestaurant: () => void;
-  onMenuDraft: React.Dispatch<React.SetStateAction<PanelMenuDraft>>;
-  onProductDraft: React.Dispatch<React.SetStateAction<PanelProductDraft>>;
-  onRestaurantDraft: React.Dispatch<React.SetStateAction<PanelRestaurantDraft>>;
-  productDraft: PanelProductDraft;
-  restaurantDraft: PanelRestaurantDraft;
-  selectedCity: string;
-  t: ReturnType<typeof useTranslations<"app">>;
-}) {
-  const cityProducts = catalog.products.filter(
-    (product) => product.citySlug === selectedCity
-  );
-  const cityRestaurants = catalog.restaurants.filter(
-    (restaurant) => restaurant.citySlug === selectedCity
-  );
-  const selectedRestaurantId =
-    menuDraft.restaurantId || cityRestaurants[0]?.id || "";
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <PanelMetric
-          icon={<Boxes className="size-5" />}
-          label={t("panelTechListings")}
-          value={cityProducts.length}
-        />
-        <PanelMetric
-          icon={<Store className="size-5" />}
-          label={t("panelRestaurants")}
-          value={cityRestaurants.length}
-        />
-        <PanelMetric
-          icon={<ClipboardList className="size-5" />}
-          label={t("panelMenuItems")}
-          value={menuItems.length}
-        />
-      </div>
-
-      {notice ? (
-        <div className="flex items-center gap-2 rounded-lg border border-[#bfe7d6] bg-[#effaf5] px-4 py-3 text-sm font-black text-[#0f766e]">
-          <Check className="size-4" aria-hidden />
-          {notice}
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <PanelCard
-          icon={<Laptop className="size-5" />}
-          subtitle={t("techPanelSubtitle")}
-          title={t("techPanelTitle")}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PanelInput
-              label={t("productTitle")}
-              onChange={(value) =>
-                onProductDraft((current) => ({ ...current, title: value }))
-              }
-              value={productDraft.title}
-            />
-            <PanelInput
-              label={t("brand")}
-              onChange={(value) =>
-                onProductDraft((current) => ({ ...current, brand: value }))
-              }
-              value={productDraft.brand}
-            />
-            <PanelSelect
-              label={t("category")}
-              onChange={(value) =>
-                onProductDraft((current) => ({
-                  ...current,
-                  category: value as Product["category"],
-                }))
-              }
-              options={[
-                ["phone", t("techPhone")],
-                ["laptop", t("techLaptop")],
-                ["accessory", t("techAccessory")],
-                ["appliance", t("techKitchen")],
-              ]}
-              value={productDraft.category}
-            />
-            <PanelSelect
-              label={t("condition")}
-              onChange={(value) =>
-                onProductDraft((current) => ({
-                  ...current,
-                  condition: value as Product["condition"],
-                }))
-              }
-              options={[
-                ["new", t("new")],
-                ["used", t("used")],
-                ["refurbished", t("refurbished")],
-              ]}
-              value={productDraft.condition}
-            />
-            <PanelInput
-              inputMode="numeric"
-              label={t("priceKrw")}
-              onChange={(value) =>
-                onProductDraft((current) => ({ ...current, price: value }))
-              }
-              value={productDraft.price}
-            />
-            <PanelInput
-              label={t("contact")}
-              onChange={(value) =>
-                onProductDraft((current) => ({ ...current, contact: value }))
-              }
-              value={productDraft.contact}
-            />
-            <div className="sm:col-span-2">
-              <PanelInput
-                label={t("imageUrl")}
-                onChange={(value) =>
-                  onProductDraft((current) => ({ ...current, imageUrl: value }))
-                }
-                value={productDraft.imageUrl}
-              />
-            </div>
-          </div>
-          <button
-            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-            onClick={onAddProduct}
-            type="button"
-          >
-            <Plus className="size-4" aria-hidden />
-            {t("addTechProduct")}
-          </button>
-        </PanelCard>
-
-        <PanelCard
-          icon={<ChefHat className="size-5" />}
-          subtitle={t("restaurantPanelSubtitle")}
-          title={t("restaurantPanelTitle")}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PanelInput
-              label={t("restaurantName")}
-              onChange={(value) =>
-                onRestaurantDraft((current) => ({ ...current, name: value }))
-              }
-              value={restaurantDraft.name}
-            />
-            <PanelSelect
-              label={t("cuisine")}
-              onChange={(value) =>
-                onRestaurantDraft((current) => ({
-                  ...current,
-                  cuisine: value as Restaurant["cuisine"],
-                }))
-              }
-              options={[
-                ["halal", "Halal"],
-                ["korean", "Korean"],
-                ["central-asian", "Central Asian"],
-                ["cafe", "Cafe"],
-                ["fast", "Fast"],
-              ]}
-              value={restaurantDraft.cuisine}
-            />
-            <PanelSelect
-              label={t("priceBand")}
-              onChange={(value) =>
-                onRestaurantDraft((current) => ({
-                  ...current,
-                  priceBand: value as Restaurant["priceBand"],
-                }))
-              }
-              options={[
-                ["budget", t("budget")],
-                ["mid", t("mid")],
-                ["premium", t("premium")],
-              ]}
-              value={restaurantDraft.priceBand}
-            />
-            <PanelInput
-              label={t("contact")}
-              onChange={(value) =>
-                onRestaurantDraft((current) => ({ ...current, contact: value }))
-              }
-              value={restaurantDraft.contact}
-            />
-            <div className="sm:col-span-2">
-              <PanelInput
-                label={t("address")}
-                onChange={(value) =>
-                  onRestaurantDraft((current) => ({
-                    ...current,
-                    address: value,
-                  }))
-                }
-                value={restaurantDraft.address}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <PanelInput
-                label={t("imageUrl")}
-                onChange={(value) =>
-                  onRestaurantDraft((current) => ({
-                    ...current,
-                    imageUrl: value,
-                  }))
-                }
-                value={restaurantDraft.imageUrl}
-              />
-            </div>
-            <PanelCheckbox
-              checked={restaurantDraft.halalFriendly}
-              label={t("halalFriendly")}
-              onChange={(value) =>
-                onRestaurantDraft((current) => ({
-                  ...current,
-                  halalFriendly: value,
-                }))
-              }
-            />
-          </div>
-          <button
-            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-            onClick={onAddRestaurant}
-            type="button"
-          >
-            <Save className="size-4" aria-hidden />
-            {t("addRestaurant")}
-          </button>
-        </PanelCard>
-      </div>
-
-      <PanelCard
-        icon={<Utensils className="size-5" />}
-        subtitle={t("menuPanelSubtitle")}
-        title={t("menuPanelTitle")}
-      >
-        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
-          <PanelSelect
-            label={t("restaurant")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, restaurantId: value }))
-            }
-            options={cityRestaurants.map((restaurant) => [
-              restaurant.id,
-              text(restaurant.name, locale),
-            ])}
-            value={selectedRestaurantId}
-          />
-          <PanelInput
-            label={t("menuItemName")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, name: value }))
-            }
-            value={menuDraft.name}
-          />
-          <PanelInput
-            label={t("menuCategory")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, category: value }))
-            }
-            value={menuDraft.category}
-          />
-          <PanelInput
-            inputMode="numeric"
-            label={t("priceKrw")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, price: value }))
-            }
-            value={menuDraft.price}
-          />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-3">
-          <PanelCheckbox
-            checked={menuDraft.halalFriendly}
-            label={t("halalFriendly")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, halalFriendly: value }))
-            }
-          />
-          <PanelCheckbox
-            checked={menuDraft.available}
-            label={t("available")}
-            onChange={(value) =>
-              onMenuDraft((current) => ({ ...current, available: value }))
-            }
-          />
-        </div>
-        <button
-          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#3a2400] text-sm font-black text-white"
-          onClick={onAddMenuItem}
-          type="button"
-        >
-          <Plus className="size-4" aria-hidden />
-          {t("addMenuItem")}
-        </button>
-
-        <div className="mt-4 overflow-hidden rounded-lg border border-[#ead9a2]">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 bg-[#fff2bf] px-3 py-2 text-xs font-black uppercase text-[#7a5a15]">
-            <span>{t("menuItemName")}</span>
-            <span>{t("price")}</span>
-            <span>{t("status")}</span>
-          </div>
-          {menuItems.length ? (
-            menuItems.slice(0, 5).map((item) => (
-              <div
-                className="grid grid-cols-[1fr_auto_auto] gap-3 border-t border-[#ead9a2] bg-white px-3 py-2 text-sm font-semibold"
-                key={item.id}
-              >
-                <span className="min-w-0 truncate">
-                  {item.name} · {item.category}
-                </span>
-                <span>{formatKrw(item.price)}</span>
-                <span className="text-[#0f766e]">
-                  {item.available ? t("available") : t("unavailable")}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white px-3 py-4 text-sm font-semibold text-[#7a5a15]">
-              {t("menuEmpty")}
-            </div>
-          )}
-        </div>
-      </PanelCard>
-
-      <div className="rounded-lg border border-[#ead9a2] bg-white p-4">
-        <h3 className="flex items-center gap-2 text-base font-black">
-          <CircleDollarSign className="size-5 text-[#d62828]" aria-hidden />
-          {t("panelIdeasTitle")}
-        </h3>
-        <div className="mt-3 grid gap-2 text-sm font-semibold text-[#5b3b07] md:grid-cols-3">
-          <p>{t("panelIdeaCategories")}</p>
-          <p>{t("panelIdeaMenu")}</p>
-          <p>{t("panelIdeaOps")}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PanelCard({
-  children,
-  icon,
-  subtitle,
-  title,
-}: {
-  children: React.ReactNode;
-  icon: React.ReactNode;
-  subtitle: string;
-  title: string;
-}) {
-  return (
-    <section className="rounded-lg border border-[#ead9a2] bg-white p-4 shadow-sm">
-      <div className="mb-4 flex items-start gap-3">
-        <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#ffbc0d] text-[#3a2400]">
-          {icon}
-        </div>
-        <div>
-          <h2 className="text-lg font-black">{title}</h2>
-          <p className="text-sm font-semibold leading-5 text-[#7a5a15]">
-            {subtitle}
-          </p>
-        </div>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function PanelMetric({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-lg border border-[#ead9a2] bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <span className="grid size-10 place-items-center rounded-lg bg-[#fff2bf] text-[#3a2400]">
-          {icon}
-        </span>
-        <span className="text-2xl font-black">{value}</span>
-      </div>
-      <p className="mt-3 text-sm font-black text-[#7a5a15]">{label}</p>
-    </div>
-  );
-}
-
-function PanelInput({
-  inputMode,
-  label,
-  onChange,
-  value,
-}: {
-  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
-  label: string;
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-black uppercase text-[#7a5a15]">
-        {label}
-      </span>
-      <input
-        className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-        inputMode={inputMode}
-        onChange={(event) => onChange(event.target.value)}
-        value={value}
-      />
-    </label>
-  );
-}
-
-function PanelSelect({
-  label,
-  onChange,
-  options,
-  value,
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  options: string[][];
-  value: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-black uppercase text-[#7a5a15]">
-        {label}
-      </span>
-      <select
-        className="h-11 w-full rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-        onChange={(event) => onChange(event.target.value)}
-        value={value}
-      >
-        {options.length ? (
-          options.map(([optionValue, optionLabel]) => (
-            <option key={optionValue} value={optionValue}>
-              {optionLabel}
-            </option>
-          ))
-        ) : (
-          <option value="">-</option>
-        )}
-      </select>
-    </label>
-  );
-}
-
-function PanelCheckbox({
-  checked,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 rounded-lg border border-[#ead9a2] bg-[#fffdf5] px-3 py-2 text-sm font-black text-[#3a2400]">
-      <input
-        checked={checked}
-        className="size-4 accent-[#ffbc0d]"
-        onChange={(event) => onChange(event.target.checked)}
-        type="checkbox"
-      />
-      {label}
-    </label>
   );
 }
 
@@ -1605,6 +892,32 @@ function CheckoutModal({
                 ))}
               </div>
             </section>
+
+            <section className="rounded-lg border border-[#ead9a2] bg-white p-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="size-5 text-[#0f766e]" aria-hidden />
+                <h3 className="text-sm font-black">
+                  {t("checkoutFlowTitle")}
+                </h3>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <CheckoutStep
+                  icon={<WalletCards className="size-4" aria-hidden />}
+                  text={t("paymentFlowClientCopy")}
+                  title={t("paymentFlowClient")}
+                />
+                <CheckoutStep
+                  icon={<LockKeyhole className="size-4" aria-hidden />}
+                  text={t("paymentFlowServerCopy")}
+                  title={t("paymentFlowServer")}
+                />
+                <CheckoutStep
+                  icon={<MessageCircle className="size-4" aria-hidden />}
+                  text={t("paymentFlowSmsCopy")}
+                  title={t("paymentFlowSms")}
+                />
+              </div>
+            </section>
           </div>
 
           <aside className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
@@ -1618,6 +931,9 @@ function CheckoutModal({
             <p className="mt-2 text-sm font-medium text-[#7a5a15]">
               {t("apiSoon")}
             </p>
+            <div className="mt-4 rounded-lg border border-[#ead9a2] bg-white px-3 py-2 text-xs font-bold leading-5 text-[#7a5a15]">
+              {t("checkoutSecureNote")}
+            </div>
             <button
               className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
               onClick={onPlaceOrder}
@@ -1636,6 +952,30 @@ function CheckoutModal({
         </div>
       </div>
     </Modal>
+  );
+}
+
+function CheckoutStep({
+  icon,
+  text,
+  title,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  title: string;
+}) {
+  return (
+    <div className="rounded-lg border border-[#f0df9f] bg-[#fffdf5] p-3">
+      <div className="flex items-center gap-2 text-sm font-black text-[#3a2400]">
+        <span className="grid size-7 place-items-center rounded-md bg-[#ffbc0d] text-[#3a2400]">
+          {icon}
+        </span>
+        {title}
+      </div>
+      <p className="mt-2 text-xs font-semibold leading-5 text-[#7a5a15]">
+        {text}
+      </p>
+    </div>
   );
 }
 
