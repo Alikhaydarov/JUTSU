@@ -21,7 +21,6 @@ import {
   Laptop,
   Loader2,
   LockKeyhole,
-  Mail,
   MapPin,
   MessageCircle,
   PackageCheck,
@@ -1653,18 +1652,18 @@ function AuthModal({
   onSubmit: (profile: UserProfile) => void;
   t: ReturnType<typeof useTranslations<"app">>;
 }) {
-  const [loginEmail, setLoginEmail] = useState("user@jutsu.app");
-  const [loginPassword, setLoginPassword] = useState("jutsu2026");
-  const [loginPhone, setLoginPhone] = useState("01012345678");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
   const [loginCode, setLoginCode] = useState("");
   const [loginSmsSent, setLoginSmsSent] = useState(false);
   const [loginSmsVerified, setLoginSmsVerified] = useState(false);
-  const [registerName, setRegisterName] = useState("JUTSU User");
-  const [registerEmail, setRegisterEmail] = useState("user@jutsu.app");
-  const [registerPassword, setRegisterPassword] = useState("jutsu2026");
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] =
-    useState("jutsu2026");
-  const [registerPhone, setRegisterPhone] = useState("01012345678");
+    useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
   const [registerCode, setRegisterCode] = useState("");
   const [registerSmsSent, setRegisterSmsSent] = useState(false);
   const [registerSmsVerified, setRegisterSmsVerified] = useState(false);
@@ -1749,7 +1748,7 @@ function AuthModal({
 
   return (
     <Modal onClose={onClose}>
-      <div className="w-full max-w-3xl p-5">
+      <div className="w-full max-w-md p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-black uppercase text-[#7a5a15]">
@@ -1773,79 +1772,77 @@ function AuthModal({
         </div>
 
         {mode === "login" ? (
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <section className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <Mail className="size-5 text-[#d62828]" aria-hidden />
-                <h3 className="text-base font-black">{t("emailLogin")}</h3>
-              </div>
-              <div className="space-y-3">
-                <button
-                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400]"
-                  onClick={submitGoogleLogin}
-                  type="button"
-                >
-                  {t("loginWithGoogle")}
-                </button>
-                <div className="flex items-center gap-3 text-xs font-black uppercase text-[#8a6a20]">
-                  <span className="h-px flex-1 bg-[#ead9a2]" />
-                  {t("orEmail")}
-                  <span className="h-px flex-1 bg-[#ead9a2]" />
-                </div>
-                <input
-                  autoComplete="email"
-                  className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                  onChange={(event) => {
-                    setError("");
-                    setLoginEmail(event.target.value);
-                  }}
-                  placeholder={t("email")}
-                  type="email"
-                  value={loginEmail}
-                />
-                <PasswordInput
-                  autoComplete="current-password"
-                  onChange={(value) => {
-                    setError("");
-                    setLoginPassword(value);
-                  }}
-                  placeholder={t("password")}
-                  showPassword={showLoginPassword}
-                  t={t}
-                  value={loginPassword}
-                  onTogglePassword={() =>
-                    setShowLoginPassword((visible) => !visible)
-                  }
-                />
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <label className="flex items-center gap-2 font-bold text-[#7a5a15]">
-                    <input
-                      className="size-4 accent-[#ffbc0d]"
-                      defaultChecked
-                      type="checkbox"
-                    />
-                    {t("rememberMe")}
-                  </label>
-                  <button className="font-black text-[#0e7490]" type="button">
-                    {t("forgotPassword")}
-                  </button>
-                </div>
-                <button
-                  className="h-11 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-                  onClick={submitEmailLogin}
-                  type="button"
-                >
-                  {t("login")}
-                </button>
-              </div>
-            </section>
+          <div className="mt-5 space-y-3">
+            <button
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#3a2400] transition hover:border-[#ffbc0d]"
+              onClick={submitGoogleLogin}
+              type="button"
+            >
+              <BadgeCheck className="size-4 text-[#0e7490]" aria-hidden />
+              {t("loginWithGoogle")}
+            </button>
 
-            <section className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <Phone className="size-5 text-[#0e7490]" aria-hidden />
-                <h3 className="text-base font-black">{t("phoneLogin")}</h3>
-              </div>
-              <div className="space-y-3">
+            <div className="flex items-center gap-3 text-xs font-black uppercase text-[#8a6a20]">
+              <span className="h-px flex-1 bg-[#ead9a2]" />
+              {t("orEmail")}
+              <span className="h-px flex-1 bg-[#ead9a2]" />
+            </div>
+
+            <input
+              autoComplete="email"
+              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+              onChange={(event) => {
+                setError("");
+                setLoginEmail(event.target.value);
+              }}
+              placeholder={t("email")}
+              type="email"
+              value={loginEmail}
+            />
+            <PasswordInput
+              autoComplete="current-password"
+              onChange={(value) => {
+                setError("");
+                setLoginPassword(value);
+              }}
+              placeholder={t("password")}
+              showPassword={showLoginPassword}
+              t={t}
+              value={loginPassword}
+              onTogglePassword={() =>
+                setShowLoginPassword((visible) => !visible)
+              }
+            />
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <label className="flex items-center gap-2 font-bold text-[#7a5a15]">
+                <input
+                  className="size-4 accent-[#ffbc0d]"
+                  defaultChecked
+                  type="checkbox"
+                />
+                {t("rememberMe")}
+              </label>
+              <button className="font-black text-[#0e7490]" type="button">
+                {t("forgotPassword")}
+              </button>
+            </div>
+            <button
+              className="h-11 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
+              onClick={submitEmailLogin}
+              type="button"
+            >
+              {t("login")}
+            </button>
+
+            <details className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#3a2400]">
+                <span className="flex items-center gap-2">
+                  <Phone className="size-4 text-[#0e7490]" aria-hidden />
+                  {t("phoneLogin")}
+                </span>
+                <ChevronDown className="size-4 text-[#7a5a15]" aria-hidden />
+              </summary>
+              <div className="mt-3 space-y-2">
                 <input
                   autoComplete="tel"
                   className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
@@ -1902,55 +1899,59 @@ function AuthModal({
                   {t("loginWithPhone")}
                 </button>
               </div>
-            </section>
+            </details>
           </div>
         ) : (
-          <section className="mt-5 rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                autoComplete="name"
-                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                onChange={(event) => setRegisterName(event.target.value)}
-                placeholder={t("name")}
-                value={registerName}
-              />
-              <input
-                autoComplete="email"
-                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                onChange={(event) => {
-                  setError("");
-                  setRegisterEmail(event.target.value);
-                }}
-                placeholder={t("email")}
-                type="email"
-                value={registerEmail}
-              />
-              <PasswordInput
-                autoComplete="new-password"
-                onChange={(value) => {
-                  setError("");
-                  setRegisterPassword(value);
-                }}
-                placeholder={t("password")}
-                showPassword={showRegisterPassword}
-                t={t}
-                value={registerPassword}
-                onTogglePassword={() =>
-                  setShowRegisterPassword((visible) => !visible)
-                }
-              />
-              <input
-                autoComplete="new-password"
-                className="h-11 rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                onChange={(event) => {
-                  setError("");
-                  setRegisterConfirmPassword(event.target.value);
-                }}
-                placeholder={t("confirmPassword")}
-                type="password"
-                value={registerConfirmPassword}
-              />
-              <div className="space-y-2 sm:col-span-2">
+          <div className="mt-5 space-y-3">
+            <input
+              autoComplete="name"
+              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+              onChange={(event) => setRegisterName(event.target.value)}
+              placeholder={t("name")}
+              value={registerName}
+            />
+            <input
+              autoComplete="email"
+              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+              onChange={(event) => {
+                setError("");
+                setRegisterEmail(event.target.value);
+              }}
+              placeholder={t("email")}
+              type="email"
+              value={registerEmail}
+            />
+            <PasswordInput
+              autoComplete="new-password"
+              onChange={(value) => {
+                setError("");
+                setRegisterPassword(value);
+              }}
+              placeholder={t("password")}
+              showPassword={showRegisterPassword}
+              t={t}
+              value={registerPassword}
+              onTogglePassword={() =>
+                setShowRegisterPassword((visible) => !visible)
+              }
+            />
+            <input
+              autoComplete="new-password"
+              className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
+              onChange={(event) => {
+                setError("");
+                setRegisterConfirmPassword(event.target.value);
+              }}
+              placeholder={t("confirmPassword")}
+              type="password"
+              value={registerConfirmPassword}
+            />
+            <div className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-3">
+              <div className="mb-3 flex items-center gap-2 text-sm font-black text-[#3a2400]">
+                <Phone className="size-4 text-[#0e7490]" aria-hidden />
+                {t("phone")}
+              </div>
+              <div className="space-y-2">
                 <input
                   autoComplete="tel"
                   className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white px-3 text-sm font-semibold outline-none focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
@@ -2000,10 +2001,10 @@ function AuthModal({
                 ) : null}
               </div>
             </div>
-            <p className="mt-3 text-xs font-semibold leading-5 text-[#7a5a15]">
+            <p className="text-xs font-semibold leading-5 text-[#7a5a15]">
               {t("passwordHelp")}
             </p>
-            <label className="mt-4 flex items-start gap-2 text-sm font-bold text-[#7a5a15]">
+            <label className="flex items-start gap-2 text-sm font-bold text-[#7a5a15]">
               <input
                 checked={acceptedTerms}
                 className="mt-0.5 size-4 accent-[#ffbc0d]"
@@ -2016,14 +2017,14 @@ function AuthModal({
               <span>{t("agreeTerms")}</span>
             </label>
             <button
-              className="mt-5 h-12 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-12 w-full rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!registerSmsVerified || !acceptedTerms}
               onClick={submitRegister}
               type="button"
             >
               {t("register")}
             </button>
-          </section>
+          </div>
         )}
 
         {error ? (
@@ -2032,16 +2033,18 @@ function AuthModal({
           </p>
         ) : null}
 
-        <button
-          className="mt-3 w-full text-sm font-black text-[#0e7490]"
-          onClick={() => {
-            setError("");
-            onMode(mode === "login" ? "register" : "login");
-          }}
-          type="button"
-        >
-          {mode === "login" ? t("register") : t("login")}
-        </button>
+        <div className="mt-4 border-t border-[#ead9a2] pt-4">
+          <button
+            className="h-11 w-full rounded-lg border border-[#ead9a2] bg-white text-sm font-black text-[#0e7490]"
+            onClick={() => {
+              setError("");
+              onMode(mode === "login" ? "register" : "login");
+            }}
+            type="button"
+          >
+            {mode === "login" ? t("createAccount") : t("login")}
+          </button>
+        </div>
         <p className="mt-3 text-center text-xs font-semibold leading-5 text-[#7a5a15]">
           {t("authDemo")}
         </p>
