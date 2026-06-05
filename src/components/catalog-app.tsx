@@ -3,7 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  TossPaymentsWidgets,
+  WidgetAgreementWidget,
+  WidgetPaymentMethodWidget,
+} from "@tosspayments/tosspayments-sdk";
 import {
   BadgeCheck,
   BookOpen,
@@ -811,6 +816,123 @@ function CheckoutModal({
   t: ReturnType<typeof useTranslations<"app">>;
   user: UserProfile | null;
 }) {
+  const tossWidgetsRef = useRef<TossPaymentsWidgets | null>(null);
+  const paymentWidgetRef = useRef<WidgetPaymentMethodWidget | null>(null);
+  const agreementWidgetRef = useRef<WidgetAgreementWidget | null>(null);
+  const [tossStatus, setTossStatus] = useState<
+    "missing" | "loading" | "ready" | "error"
+  >(
+    process.env.NEXT_PUBLIC_TOSS_WIDGET_CLIENT_KEY ? "loading" : "missing"
+  );
+  const [tossError, setTossError] = useState("");
+  const usesTossWidget =
+    paymentMethod === "toss" ||
+    paymentMethod === "card" ||
+    paymentMethod === "naverPay" ||
+    paymentMethod === "kakaoPay";
+
+  useEffect(() => {
+    let mounted = true;
+    const clientKey = process.env.NEXT_PUBLIC_TOSS_WIDGET_CLIENT_KEY;
+    const variantKey =
+      process.env.NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY || "DEFAULT";
+
+    async function destroyWidgets() {
+      await Promise.allSettled([
+        paymentWidgetRef.current?.destroy(),
+        agreementWidgetRef.current?.destroy(),
+      ]);
+      paymentWidgetRef.current = null;
+      agreementWidgetRef.current = null;
+      tossWidgetsRef.current = null;
+    }
+
+    async function setupWidget() {
+      if (!clientKey) {
+        setTossStatus("missing");
+        return;
+      }
+
+      setTossStatus("loading");
+      setTossError("");
+
+      try {
+        await destroyWidgets();
+        const { ANONYMOUS, loadTossPayments } = await import(
+          "@tosspayments/tosspayments-sdk"
+        );
+        const tossPayments = await loadTossPayments(clientKey);
+        const widgets = tossPayments.widgets({ customerKey: ANONYMOUS });
+
+        await widgets.setAmount({
+          currency: "KRW",
+          value: product.priceKrw,
+        });
+
+        const [paymentWidget, agreementWidget] = await Promise.all([
+          widgets.renderPaymentMethods({
+            selector: "#jutsu-toss-payment-methods",
+            variantKey,
+          }),
+          widgets.renderAgreement({
+            selector: "#jutsu-toss-agreement",
+            variantKey: "DEFAULT",
+          }),
+        ]);
+
+        if (!mounted) {
+          await Promise.allSettled([
+            paymentWidget.destroy(),
+            agreementWidget.destroy(),
+          ]);
+          return;
+        }
+
+        tossWidgetsRef.current = widgets;
+        paymentWidgetRef.current = paymentWidget;
+        agreementWidgetRef.current = agreementWidget;
+        setTossStatus("ready");
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        setTossError(error instanceof Error ? error.message : String(error));
+        setTossStatus("error");
+      }
+    }
+
+    setupWidget();
+
+    return () => {
+      mounted = false;
+      void destroyWidgets();
+    };
+  }, [product.id, product.priceKrw]);
+
+  const requestTossPayment = async () => {
+    if (!usesTossWidget || !tossWidgetsRef.current || tossStatus !== "ready") {
+      onPlaceOrder();
+      return;
+    }
+
+    const origin = window.location.origin;
+
+    try {
+      await tossWidgetsRef.current.requestPayment({
+        customerEmail: user?.email ?? undefined,
+        customerName: user?.name ?? "JUTSU customer",
+        failUrl: `${origin}/${locale}/payments/fail`,
+        orderId: createTossOrderId(product.id),
+        orderName: text(product.name, locale).slice(0, 100),
+        successUrl: `${origin}/${locale}/payments/success`,
+      });
+    } catch (error) {
+      setTossError(error instanceof Error ? error.message : String(error));
+      setTossStatus("error");
+    }
+  };
+
   return (
     <Modal onClose={onClose}>
       <div className="max-h-[88vh] overflow-y-auto p-5">
@@ -893,6 +1015,43 @@ function CheckoutModal({
               </div>
             </section>
 
+            {usesTossWidget ? (
+              <section className="rounded-lg border border-[#ead9a2] bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-black">
+                    {t("tossWidgetTitle")}
+                  </h3>
+                  <span className="rounded-md bg-[#fff2bf] px-2 py-1 text-xs font-black text-[#3a2400]">
+                    Toss
+                  </span>
+                </div>
+                <div
+                  className="mt-3 min-h-28 overflow-hidden rounded-lg border border-[#f0df9f] bg-[#fffdf5]"
+                  id="jutsu-toss-payment-methods"
+                />
+                <div
+                  className="mt-3 min-h-16 overflow-hidden rounded-lg border border-[#f0df9f] bg-[#fffdf5]"
+                  id="jutsu-toss-agreement"
+                />
+                <p className="mt-3 text-xs font-bold leading-5 text-[#7a5a15]">
+                  {t(
+                    tossStatus === "ready"
+                      ? "tossWidgetReady"
+                      : tossStatus === "loading"
+                        ? "tossWidgetLoading"
+                        : tossStatus === "missing"
+                          ? "tossWidgetMissingKey"
+                          : "tossWidgetError"
+                  )}
+                </p>
+                {tossError ? (
+                  <p className="mt-2 rounded-md bg-[#fff1f1] px-3 py-2 text-xs font-bold leading-5 text-[#b91c1c]">
+                    {tossError}
+                  </p>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="rounded-lg border border-[#ead9a2] bg-white p-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="size-5 text-[#0f766e]" aria-hidden />
@@ -936,7 +1095,8 @@ function CheckoutModal({
             </div>
             <button
               className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-              onClick={onPlaceOrder}
+              disabled={usesTossWidget && tossStatus === "loading"}
+              onClick={requestTossPayment}
               type="button"
             >
               {orderPlaced ? (
@@ -944,6 +1104,8 @@ function CheckoutModal({
                   <Check className="size-5" aria-hidden />
                   {t("orderReady")}
                 </>
+              ) : usesTossWidget && tossStatus === "ready" ? (
+                t("payWithToss")
               ) : (
                 t("placeOrder")
               )}
@@ -1680,4 +1842,14 @@ function formatKrw(value: number) {
     currency: "KRW",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function createTossOrderId(productId: string) {
+  const safeProductId = productId.replace(/[^A-Za-z0-9_=-]/g, "_").slice(0, 24);
+  const randomPart =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+      : Math.random().toString(36).slice(2, 14);
+
+  return `jutsu_${safeProductId}_${Date.now()}_${randomPart}`.slice(0, 64);
 }
