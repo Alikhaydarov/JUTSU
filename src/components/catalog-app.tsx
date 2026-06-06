@@ -69,18 +69,12 @@ type UserProfile = {
   role: AccountRole;
 };
 type PaymentMethod =
-  | "card"
   | "toss"
-  | "naverPay"
-  | "kakaoPay"
   | "bankTransfer"
   | "cashOnPickup";
 
 const paymentMethods: PaymentMethod[] = [
-  "card",
   "toss",
-  "naverPay",
-  "kakaoPay",
   "bankTransfer",
   "cashOnPickup",
 ];
@@ -824,12 +818,7 @@ function CheckoutModal({
   >(
     process.env.NEXT_PUBLIC_TOSS_WIDGET_CLIENT_KEY ? "loading" : "missing"
   );
-  const [tossError, setTossError] = useState("");
-  const usesTossWidget =
-    paymentMethod === "toss" ||
-    paymentMethod === "card" ||
-    paymentMethod === "naverPay" ||
-    paymentMethod === "kakaoPay";
+  const usesTossWidget = paymentMethod === "toss";
 
   useEffect(() => {
     let mounted = true;
@@ -848,13 +837,17 @@ function CheckoutModal({
     }
 
     async function setupWidget() {
+      if (!usesTossWidget) {
+        await destroyWidgets();
+        return;
+      }
+
       if (!clientKey) {
         setTossStatus("missing");
         return;
       }
 
       setTossStatus("loading");
-      setTossError("");
 
       try {
         await destroyWidgets();
@@ -897,7 +890,7 @@ function CheckoutModal({
           return;
         }
 
-        setTossError(error instanceof Error ? error.message : String(error));
+        console.error("Toss widget failed to load", error);
         setTossStatus("error");
       }
     }
@@ -908,11 +901,15 @@ function CheckoutModal({
       mounted = false;
       void destroyWidgets();
     };
-  }, [product.id, product.priceKrw]);
+  }, [product.id, product.priceKrw, usesTossWidget]);
 
   const requestTossPayment = async () => {
-    if (!usesTossWidget || !tossWidgetsRef.current || tossStatus !== "ready") {
+    if (!usesTossWidget) {
       onPlaceOrder();
+      return;
+    }
+
+    if (!tossWidgetsRef.current || tossStatus !== "ready") {
       return;
     }
 
@@ -928,7 +925,7 @@ function CheckoutModal({
         successUrl: `${origin}/${locale}/payments/success`,
       });
     } catch (error) {
-      setTossError(error instanceof Error ? error.message : String(error));
+      console.error("Toss payment request failed", error);
       setTossStatus("error");
     }
   };
@@ -996,12 +993,12 @@ function CheckoutModal({
 
             <section>
               <h3 className="text-sm font-black">{t("paymentMethod")}</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 {paymentMethods.map((method) => (
                   <ChoiceButton
                     active={paymentMethod === method}
                     icon={
-                      method === "card" ? (
+                      method === "toss" ? (
                         <CreditCard className="size-4" />
                       ) : (
                         <WalletCards className="size-4" />
@@ -1016,86 +1013,114 @@ function CheckoutModal({
             </section>
 
             {usesTossWidget ? (
-              <section className="rounded-lg border border-[#ead9a2] bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-black">
-                    {t("tossWidgetTitle")}
-                  </h3>
-                  <span className="rounded-md bg-[#fff2bf] px-2 py-1 text-xs font-black text-[#3a2400]">
-                    Toss
-                  </span>
-                </div>
-                <div
-                  className="mt-3 min-h-28 overflow-hidden rounded-lg border border-[#f0df9f] bg-[#fffdf5]"
-                  id="jutsu-toss-payment-methods"
-                />
-                <div
-                  className="mt-3 min-h-16 overflow-hidden rounded-lg border border-[#f0df9f] bg-[#fffdf5]"
-                  id="jutsu-toss-agreement"
-                />
-                <p className="mt-3 text-xs font-bold leading-5 text-[#7a5a15]">
-                  {t(
-                    tossStatus === "ready"
-                      ? "tossWidgetReady"
-                      : tossStatus === "loading"
-                        ? "tossWidgetLoading"
-                        : tossStatus === "missing"
-                          ? "tossWidgetMissingKey"
-                          : "tossWidgetError"
-                  )}
-                </p>
-                {tossError ? (
-                  <p className="mt-2 rounded-md bg-[#fff1f1] px-3 py-2 text-xs font-bold leading-5 text-[#b91c1c]">
-                    {tossError}
-                  </p>
-                ) : null}
-              </section>
+              tossStatus === "missing" || tossStatus === "error" ? (
+                <section className="flex items-start gap-3 rounded-lg border border-[#f0df9f] bg-[#fffdf5] p-4">
+                  <ShieldCheck
+                    className="mt-0.5 size-5 shrink-0 text-[#7a5a15]"
+                    aria-hidden
+                  />
+                  <div>
+                    <h3 className="text-sm font-black">
+                      {t("onlinePayment")}
+                    </h3>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-[#7a5a15]">
+                      {t("paymentUnavailable")}
+                    </p>
+                  </div>
+                </section>
+              ) : (
+                <section className="overflow-hidden rounded-lg border border-[#e6e6e6] bg-white">
+                  <div className="flex items-center justify-between border-b border-[#eeeeee] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck
+                        className="size-4 text-[#0f766e]"
+                        aria-hidden
+                      />
+                      <h3 className="text-sm font-black">
+                        {t("onlinePayment")}
+                      </h3>
+                    </div>
+                    <span className="text-xs font-black text-[#6b7280]">
+                      Toss Payments
+                    </span>
+                  </div>
+                  <div
+                    className="min-h-28 overflow-hidden"
+                    id="jutsu-toss-payment-methods"
+                  />
+                  <div
+                    className="min-h-16 overflow-hidden border-t border-[#eeeeee]"
+                    id="jutsu-toss-agreement"
+                  />
+                  {tossStatus === "loading" ? (
+                    <p className="border-t border-[#eeeeee] px-4 py-3 text-xs font-semibold text-[#6b7280]">
+                      {t("tossWidgetLoading")}
+                    </p>
+                  ) : null}
+                </section>
+              )
             ) : null}
-
-            <section className="rounded-lg border border-[#ead9a2] bg-white p-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="size-5 text-[#0f766e]" aria-hidden />
-                <h3 className="text-sm font-black">
-                  {t("checkoutFlowTitle")}
-                </h3>
-              </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <CheckoutStep
-                  icon={<WalletCards className="size-4" aria-hidden />}
-                  text={t("paymentFlowClientCopy")}
-                  title={t("paymentFlowClient")}
-                />
-                <CheckoutStep
-                  icon={<LockKeyhole className="size-4" aria-hidden />}
-                  text={t("paymentFlowServerCopy")}
-                  title={t("paymentFlowServer")}
-                />
-                <CheckoutStep
-                  icon={<MessageCircle className="size-4" aria-hidden />}
-                  text={t("paymentFlowSmsCopy")}
-                  title={t("paymentFlowSms")}
-                />
-              </div>
-            </section>
           </div>
 
-          <aside className="rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4">
+          <aside className="h-fit rounded-lg border border-[#ead9a2] bg-[#fffdf5] p-4 lg:sticky lg:top-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-black">{t("payment")}</span>
+              <span className="text-sm font-black">{t("orderSummary")}</span>
               <LockKeyhole className="size-4 text-[#0f766e]" aria-hidden />
             </div>
-            <div className="mt-5 text-2xl font-black">
-              {formatKrw(product.priceKrw)}
+
+            <div className="mt-4 flex items-center gap-3 border-b border-[#ead9a2] pb-4">
+              <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-white">
+                <Image
+                  alt={text(product.name, locale)}
+                  className="object-cover"
+                  fill
+                  sizes="64px"
+                  src={product.imageUrl}
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="line-clamp-2 text-sm font-black leading-5">
+                  {text(product.name, locale)}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-[#7a5a15]">
+                  {product.sellerName}
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-[#7a5a15]">
-              {t("apiSoon")}
-            </p>
-            <div className="mt-4 rounded-lg border border-[#ead9a2] bg-white px-3 py-2 text-xs font-bold leading-5 text-[#7a5a15]">
-              {t("checkoutSecureNote")}
+
+            <div className="space-y-3 py-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold text-[#7a5a15]">
+                  {t("subtotal")}
+                </span>
+                <span className="font-black">
+                  {formatKrw(product.priceKrw)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold text-[#7a5a15]">
+                  {deliveryMode === "delivery" ? t("delivery") : t("pickup")}
+                </span>
+                <span className="font-black text-[#0f766e]">{t("free")}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-[#ead9a2] pt-3">
+                <span className="font-black">{t("total")}</span>
+                <span className="text-xl font-black">
+                  {formatKrw(product.priceKrw)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg bg-white px-3 py-3 text-xs font-semibold leading-5 text-[#6b5a2b]">
+              <ShieldCheck
+                className="mt-0.5 size-4 shrink-0 text-[#0f766e]"
+                aria-hidden
+              />
+              {t("securePayment")}
             </div>
             <button
-              className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30"
-              disabled={usesTossWidget && tossStatus === "loading"}
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#ffbc0d] px-4 text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30 transition disabled:cursor-not-allowed disabled:bg-[#e8ddbd] disabled:text-[#8a7b52] disabled:shadow-none"
+              disabled={usesTossWidget && tossStatus !== "ready"}
               onClick={requestTossPayment}
               type="button"
             >
@@ -1106,6 +1131,10 @@ function CheckoutModal({
                 </>
               ) : usesTossWidget && tossStatus === "ready" ? (
                 t("payWithToss")
+              ) : usesTossWidget ? (
+                tossStatus === "loading"
+                  ? t("tossWidgetLoading")
+                  : t("chooseAnotherPayment")
               ) : (
                 t("placeOrder")
               )}
@@ -1114,30 +1143,6 @@ function CheckoutModal({
         </div>
       </div>
     </Modal>
-  );
-}
-
-function CheckoutStep({
-  icon,
-  text,
-  title,
-}: {
-  icon: React.ReactNode;
-  text: string;
-  title: string;
-}) {
-  return (
-    <div className="rounded-lg border border-[#f0df9f] bg-[#fffdf5] p-3">
-      <div className="flex items-center gap-2 text-sm font-black text-[#3a2400]">
-        <span className="grid size-7 place-items-center rounded-md bg-[#ffbc0d] text-[#3a2400]">
-          {icon}
-        </span>
-        {title}
-      </div>
-      <p className="mt-2 text-xs font-semibold leading-5 text-[#7a5a15]">
-        {text}
-      </p>
-    </div>
   );
 }
 
