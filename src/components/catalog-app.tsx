@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   BadgeCheck,
   ChevronDown,
@@ -10,13 +10,11 @@ import {
   CreditCard,
   Loader2,
   MapPin,
-  MessageCircle,
   Phone,
   Search,
   ShieldCheck,
   ShoppingBag,
   Star,
-  Utensils,
   WalletCards,
   X,
 } from "lucide-react";
@@ -32,11 +30,15 @@ type CatalogAppProps = {
 type DeliveryMode = "delivery" | "pickup";
 type PaymentMethod = "toss" | "bankTransfer" | "cashOnDelivery";
 
-type CartItem = {
+type MenuItem = {
   id: string;
   restaurantId: string;
   name: LocalizedText;
+  description: LocalizedText;
   priceKrw: number;
+};
+
+type CartItem = MenuItem & {
   quantity: number;
 };
 
@@ -147,7 +149,8 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("delivery");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cashOnDelivery");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("cashOnDelivery");
   const [customerForm, setCustomerForm] = useState<CustomerForm>({
     name: "",
     phone: "",
@@ -169,7 +172,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
   );
 
   const cartRestaurant = cartItems[0]
-    ? catalog.restaurants.find((restaurant) => restaurant.id === cartItems[0].restaurantId)
+    ? catalog.restaurants.find(
+        (restaurant) => restaurant.id === cartItems[0].restaurantId
+      )
     : null;
 
   async function changeCity(nextCity: string) {
@@ -189,24 +194,21 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
     }
   }
 
-  function addToCart(restaurant: Restaurant, item: CartItem) {
+  function addToCart(restaurant: Restaurant, menuItem: MenuItem) {
     setCartItems((currentItems) => {
       const isDifferentRestaurant = currentItems.some(
-        (currentItem) => currentItem.restaurantId !== restaurant.id
+        (item) => item.restaurantId !== restaurant.id
       );
-
       const baseItems = isDifferentRestaurant ? [] : currentItems;
-      const existingItem = baseItems.find((currentItem) => currentItem.id === item.id);
+      const existingItem = baseItems.find((item) => item.id === menuItem.id);
 
       if (existingItem) {
-        return baseItems.map((currentItem) =>
-          currentItem.id === item.id
-            ? { ...currentItem, quantity: currentItem.quantity + 1 }
-            : currentItem
+        return baseItems.map((item) =>
+          item.id === menuItem.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
 
-      return [...baseItems, item];
+      return [...baseItems, { ...menuItem, quantity: 1 }];
     });
   }
 
@@ -222,6 +224,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
     setOrderPlaced(true);
     setShowCheckout(false);
     setCartItems([]);
+    setCustomerForm({ name: "", phone: "", address: "", note: "" });
   }
 
   const copy = heroCopy[locale];
@@ -231,7 +234,13 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-4 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 rounded-3xl border border-[#ead9a2] bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <Image alt="JUTSU" height={48} priority src="/jutsu-logo.svg" width={160} />
+            <Image
+              alt="JUTSU"
+              height={48}
+              priority
+              src="/jutsu-logo.svg"
+              width={160}
+            />
             <div className="hidden h-8 w-px bg-[#ead9a2] sm:block" />
             <p className="hidden text-sm font-semibold text-[#7a5a15] sm:block">
               Halal food ordering platform in Korea
@@ -243,7 +252,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               <span className="sr-only">Language</span>
               <select
                 className="h-10 appearance-none rounded-xl border border-[#ead9a2] bg-[#fffdf5] pl-3 pr-9 text-sm font-bold outline-none transition focus:border-[#ffbc0d] focus:ring-4 focus:ring-[#ffbc0d]/25"
-                onChange={(event) => router.replace(`/${event.target.value}?city=${selectedCity}`)}
+                onChange={(event) =>
+                  router.replace(`/${event.target.value}?city=${selectedCity}`)
+                }
                 value={locale}
               >
                 {locales.map((item) => (
@@ -257,6 +268,7 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
                 className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-[#7a5a15]"
               />
             </label>
+
             <a
               className="inline-flex h-10 items-center justify-center rounded-xl border border-[#ead9a2] bg-[#fffdf5] px-3 text-sm font-black text-[#3a2400]"
               href="/business/dashboard"
@@ -279,11 +291,15 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
               {copy.subtitle}
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <HeroStat label="Restaurants" value={catalog.restaurants.length.toString()} />
+              <HeroStat
+                label="Restaurants"
+                value={catalog.restaurants.length.toString()}
+              />
               <HeroStat label="City" value={text(selectedCityData.name, locale)} />
               <HeroStat label="Focus" value="Halal food" />
             </div>
           </div>
+
           <div className="rounded-3xl bg-[#3a2400] p-5 text-white">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffdc72]">
               Order flow
@@ -349,7 +365,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-black">{text(selectedCityData.name, locale)}</h2>
+            <h2 className="text-2xl font-black">
+              {text(selectedCityData.name, locale)}
+            </h2>
             <p className="text-sm font-semibold text-[#7a5a15]">
               Restaurants and halal food ordering only
             </p>
@@ -387,7 +405,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
             setOrderPlaced(false);
             setShowCheckout(true);
           }}
-          restaurantName={cartRestaurant ? text(cartRestaurant.name, locale) : "Restaurant"}
+          restaurantName={
+            cartRestaurant ? text(cartRestaurant.name, locale) : "Restaurant"
+          }
           total={cartTotal}
         />
       ) : null}
@@ -415,7 +435,9 @@ export function CatalogApp({ initialData, locale }: CatalogAppProps) {
           onPaymentMethod={setPaymentMethod}
           onPlaceOrder={placeOrder}
           paymentMethod={paymentMethod}
-          restaurantName={cartRestaurant ? text(cartRestaurant.name, locale) : "Restaurant"}
+          restaurantName={
+            cartRestaurant ? text(cartRestaurant.name, locale) : "Restaurant"
+          }
           total={cartTotal}
         />
       ) : null}
@@ -472,6 +494,7 @@ function RestaurantCard({
             {restaurant.rating.toFixed(1)}
           </span>
         </div>
+
         <div className="flex min-h-56 flex-col gap-3 p-4">
           <div>
             <h2 className="line-clamp-2 text-xl font-black">
@@ -482,6 +505,7 @@ function RestaurantCard({
               <span className="truncate">{text(restaurant.address, locale)}</span>
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2">
             <span className="rounded-xl bg-[#fff2bf] px-2 py-1 text-xs font-black text-[#3a2400]">
               {text(cuisineLabels[restaurant.cuisine], locale)}
@@ -490,11 +514,13 @@ function RestaurantCard({
               {priceBandLabels[restaurant.priceBand]}
             </span>
           </div>
+
           <ul className="space-y-1 text-sm font-semibold text-[#5b3b07]">
             {restaurant.menuHighlights.slice(0, 3).map((item) => (
               <li key={text(item, locale)}>• {text(item, locale)}</li>
             ))}
           </ul>
+
           <span className="mt-auto inline-flex h-11 items-center justify-center rounded-2xl bg-[#ffbc0d] text-sm font-black text-[#3a2400] shadow-sm shadow-[#ffbc0d]/30">
             Open menu
           </span>
@@ -514,7 +540,7 @@ function RestaurantModal({
 }: {
   cartItems: CartItem[];
   locale: Locale;
-  onAddToCart: (restaurant: Restaurant, item: CartItem) => void;
+  onAddToCart: (restaurant: Restaurant, item: MenuItem) => void;
   onClose: () => void;
   onQuantity: (itemId: string, quantity: number) => void;
   restaurant: Restaurant;
@@ -540,10 +566,13 @@ function RestaurantModal({
             <X className="size-5" aria-hidden />
           </button>
         </div>
+
         <div className="overflow-y-auto p-5 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-3xl font-black">{text(restaurant.name, locale)}</h2>
+              <h2 className="text-3xl font-black">
+                {text(restaurant.name, locale)}
+              </h2>
               <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#7a5a15]">
                 <MapPin className="size-4 text-[#d62828]" aria-hidden />
                 {text(restaurant.address, locale)}
@@ -569,7 +598,9 @@ function RestaurantModal({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-lg font-black">{text(item.name, locale)}</p>
+                      <p className="text-lg font-black">
+                        {text(item.name, locale)}
+                      </p>
                       <p className="mt-1 text-sm font-semibold text-[#7a5a15]">
                         {text(item.description, locale)}
                       </p>
@@ -578,6 +609,7 @@ function RestaurantModal({
                       {formatKrw(item.priceKrw)}
                     </p>
                   </div>
+
                   {inCart ? (
                     <div className="mt-4 flex items-center justify-between rounded-2xl bg-white p-2">
                       <button
@@ -716,7 +748,9 @@ function CheckoutModal({
                   {item.quantity} × {formatKrw(item.priceKrw)}
                 </p>
               </div>
-              <p className="font-black">{formatKrw(item.priceKrw * item.quantity)}</p>
+              <p className="font-black">
+                {formatKrw(item.priceKrw * item.quantity)}
+              </p>
             </div>
           ))}
         </div>
@@ -749,7 +783,9 @@ function CheckoutModal({
           />
           <TextInput
             label="Address"
-            onChange={(value) => onCustomerForm({ ...customerForm, address: value })}
+            onChange={(value) =>
+              onCustomerForm({ ...customerForm, address: value })
+            }
             value={customerForm.address}
           />
           <TextInput
@@ -763,7 +799,13 @@ function CheckoutModal({
           {(Object.keys(paymentLabels) as PaymentMethod[]).map((method) => (
             <ChoiceButton
               active={paymentMethod === method}
-              icon={method === "toss" ? <CreditCard className="size-4" /> : <WalletCards className="size-4" />}
+              icon={
+                method === "toss" ? (
+                  <CreditCard className="size-4" />
+                ) : (
+                  <WalletCards className="size-4" />
+                )
+              }
               key={method}
               label={text(paymentLabels[method], locale)}
               onClick={() => onPaymentMethod(method)}
@@ -796,7 +838,13 @@ function CheckoutModal({
   );
 }
 
-function OrderSuccessModal({ locale, onClose }: { locale: Locale; onClose: () => void }) {
+function OrderSuccessModal({
+  locale,
+  onClose,
+}: {
+  locale: Locale;
+  onClose: () => void;
+}) {
   const message: Record<Locale, string> = {
     uz: "Buyurtma qabul qilindi. Keyingi bosqichda bu order restoran admin paneliga tushadi.",
     ru: "Заказ принят. На следующем этапе он появится в панели ресторана.",
@@ -833,7 +881,7 @@ function ChoiceButton({
   onClick,
 }: {
   active: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
 }) {
@@ -906,8 +954,13 @@ function filterRestaurants(
   });
 }
 
-function buildMenuItems(restaurant: Restaurant): CartItem[] {
-  const basePrice = restaurant.priceBand === "budget" ? 9000 : restaurant.priceBand === "mid" ? 13000 : 19000;
+function buildMenuItems(restaurant: Restaurant): MenuItem[] {
+  const basePrice =
+    restaurant.priceBand === "budget"
+      ? 9000
+      : restaurant.priceBand === "mid"
+        ? 13000
+        : 19000;
 
   return restaurant.menuHighlights.map((highlight, index) => ({
     id: `${restaurant.id}-menu-${index + 1}`,
@@ -920,7 +973,6 @@ function buildMenuItems(restaurant: Restaurant): CartItem[] {
       ko: "데모 메뉴 항목입니다. 실제 메뉴는 나중에 Django API에서 가져옵니다.",
     },
     priceKrw: basePrice + index * 2500,
-    quantity: 1,
   }));
 }
 
